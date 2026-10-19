@@ -81,7 +81,7 @@
       <select id="model">
         <option value="base">Hızlı (düşük kalite, ~75 MB)</option>
         <option value="small" selected>Dengeli (~250 MB)</option>
-        <option value="turbo">En iyi (güçlü iPad, ~760 MB)</option>
+        <option value="turbo">En iyi (~760 MB, iPad'de takılabilir)</option>
       </select>
     </div>
     <div class="status" id="status">Hazır</div>
@@ -112,7 +112,16 @@
 
   const worker = new Worker('worker.js', { type: 'module' });
 
+  // indirme uzun süre ilerlemezse kullanıcıya ne yapacağını söyle
+  let lastChange = Date.now();
+  setInterval(() => {
+    if (busy && /indiriliyor/.test(statusEl.textContent) && Date.now() - lastChange > 60000)
+      setStatus(statusEl.textContent.split(' — ')[0] +
+        ' — takıldı gibi. Sayfayı yenile ve tekrar dene; tamamlanan dosyalar tekrar inmez. "En iyi" seçiliyse "Dengeli"yi dene.', null, true);
+  }, 5000);
+
   function setStatus(text, progress, err = false) {
+    if (text !== statusEl.textContent) lastChange = Date.now();
     statusEl.textContent = text;
     statusEl.classList.toggle('err', err);
     if (progress != null) { bar.hidden = false; bar.value = progress; }

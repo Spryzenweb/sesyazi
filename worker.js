@@ -51,7 +51,9 @@ async function load(key) {
       files.set(p.file, [p.loaded, p.total]);
       let a = 0, b = 0;
       for (const [l, t] of files.values()) { a += l; b += t; }
-      post('status', { text: `Model indiriliyor: ${(a / 1e6).toFixed(0)} / ${(b / 1e6).toFixed(0)} MB`, progress: a / b });
+      post('status', a >= b
+        ? { text: 'İndirme bitti, model başlatılıyor (1-2 dk sürebilir)...', progress: 1 }
+        : { text: `Model indiriliyor: ${(a / 1e6).toFixed(0)} / ${(b / 1e6).toFixed(0)} MB`, progress: a / b });
     }
   };
   post('status', { text: 'Model hazırlanıyor...', progress: 0 });
