@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ses Yazı</title>
-<meta name="description" content="Ses kayıtlarını cihazda yazıya döker. Türkçe + İngilizce karışık konuşma.">
+<meta name="description" content="Ses kayıtlarını yazıya döker. Türkçe + İngilizce karışık konuşma.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ses Yazı">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -16,14 +16,14 @@
 <style>
   :root {
     --bg: #f6f5f2; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
-    --line: #e4e2dc; --accent: #2f5bd3; --accent-text: #fff;
-    --tr: #c2410c; --en: #1d4ed8; --err: #b42318;
+    --line: #e4e2dc; --accent: #2f5bd3; --accent-text: #fff; --soft: #eef2fc;
+    --tr: #c2410c; --en: #1d4ed8; --err: #b42318; --ok: #157f3b;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #16171a; --card: #1f2024; --text: #ececee; --muted: #9a9aa2;
-      --line: #2e3036; --accent: #6e8ff0; --accent-text: #0b0c0e;
-      --tr: #fb923c; --en: #93b4ff; --err: #f97066;
+      --line: #2e3036; --accent: #6e8ff0; --accent-text: #0b0c0e; --soft: #252b3d;
+      --tr: #fb923c; --en: #93b4ff; --err: #f97066; --ok: #4ade80;
     }
   }
   * { box-sizing: border-box; }
@@ -35,8 +35,15 @@
   }
   main { max-width: 760px; margin: 0 auto; }
   h1 { font-size: 28px; margin: 8px 0 4px; letter-spacing: -0.02em; }
+  h2 { font-size: 17px; margin: 0 0 10px; }
   .sub { color: var(--muted); margin: 0 0 20px; font-size: 15px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+  .seg { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 3px; margin-bottom: 14px; }
+  .seg button {
+    flex: 1; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 15px; font-weight: 600;
+    padding: 9px 6px; border-radius: 9px; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
   .pick {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     width: 100%; padding: 18px; border: 0; border-radius: 14px;
@@ -46,37 +53,77 @@
   .pick[aria-disabled="true"] { opacity: .5; pointer-events: none; }
   .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
   .row label { color: var(--muted); font-size: 15px; }
-  select {
-    font: inherit; font-size: 15px; padding: 8px 10px; border-radius: 10px;
+  select, input[type=password], input[type=text] {
+    font: inherit; font-size: 15px; padding: 10px 12px; border-radius: 10px;
     border: 1px solid var(--line); background: var(--bg); color: var(--text);
   }
+  input[type=password] { flex: 1 1 220px; min-width: 0; }
+  .btn {
+    padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+  .setup { background: var(--soft); border-radius: 12px; padding: 14px 16px; font-size: 15px; }
+  .setup ol { margin: 6px 0 12px; padding-left: 20px; }
+  .setup li { margin-bottom: 6px; }
+  .setup a { color: var(--accent); font-weight: 600; }
   .status { font-size: 15px; margin-top: 14px; min-height: 1.5em; }
   .status.err { color: var(--err); }
   progress { width: 100%; height: 8px; margin-top: 10px; accent-color: var(--accent); }
   .actions { display: flex; gap: 10px; flex-wrap: wrap; }
-  .actions button {
-    flex: 1 1 140px; padding: 12px; border-radius: 12px; border: 1px solid var(--line);
-    background: var(--card); color: var(--text); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
-  }
+  .actions button { flex: 1 1 140px; padding: 12px; }
   #out p { margin: 0 0 12px; }
   .t { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; margin-right: 6px; }
   .lang { font-size: 12px; font-weight: 700; margin-right: 6px; }
   .lang.tr { color: var(--tr); } .lang.en { color: var(--en); }
   .note { color: var(--muted); font-size: 13px; }
+  .hist { list-style: none; margin: 0; padding: 0; }
+  .hist li { border-top: 1px solid var(--line); }
+  .hist li:first-child { border-top: 0; }
+  .hist button {
+    width: 100%; text-align: left; background: none; border: 0; color: var(--text); font: inherit;
+    padding: 12px 2px; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
+  }
+  .hist .name { font-weight: 600; overflow-wrap: anywhere; }
+  .hist .meta { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .hist .pending .meta { color: var(--accent); }
+  .hist .failed .meta { color: var(--err); }
+  .link { background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; padding: 0; }
   [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 <main>
   <h1>Ses Yazı</h1>
-  <p class="sub">Ses kaydını cihazında yazıya döker. Türkçe ve İngilizce cümle cümle otomatik algılanır. Ses hiçbir yere gönderilmez.</p>
+  <p class="sub">Ses kaydını yazıya döker. Türkçe ve İngilizce cümle cümle otomatik algılanır.</p>
 
   <div class="card">
+    <div class="seg" role="group" aria-label="İşlem yeri">
+      <button id="modeServer" aria-pressed="true">Sunucuda (önerilen)</button>
+      <button id="modeDevice" aria-pressed="false">Bu cihazda</button>
+    </div>
+
+    <!-- sunucu modu: ilk kurulum -->
+    <div id="setup" class="setup" hidden>
+      <strong>Bir kerelik kurulum</strong>
+      <ol>
+        <li><a id="tokenLink" target="_blank" rel="noopener">Bu bağlantıya dokun</a> ve GitHub'a giriş yap.</li>
+        <li><b>Repository access</b> kısmında <b>Only select repositories</b> seç, listeden <b>sesyazi-data</b>'yı işaretle.</li>
+        <li><b>Permissions</b> kısmında <b>Contents: Read and write</b> ve <b>Actions: Read-only</b> olduğundan emin ol.</li>
+        <li>En alttaki <b>Generate token</b>'a bas, çıkan <code>github_pat_…</code> kodunu kopyala ve buraya yapıştır:</li>
+      </ol>
+      <div class="row" style="margin-top:0">
+        <input id="tokenInput" type="password" placeholder="github_pat_..." autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button class="btn primary" id="tokenSave">Kaydet</button>
+      </div>
+    </div>
+
     <label class="pick" id="pickBtn">
       <span aria-hidden="true">🎙️</span> Ses dosyası seç
       <input id="file" type="file" accept="audio/*,video/*,.m4a,.mp3,.wav,.aac,.ogg,.opus" hidden>
     </label>
-    <div class="row">
+
+    <div class="row" id="modelRow" hidden>
       <label for="model">Kalite</label>
       <select id="model">
         <option value="base">Hızlı (düşük kalite, ~75 MB)</option>
@@ -89,14 +136,21 @@
   </div>
 
   <div class="card" id="resultCard" hidden>
+    <h2 id="resultTitle"></h2>
     <div class="actions" id="actions" hidden>
-      <button id="saveBtn">Kaydet (.txt)</button>
-      <button id="copyBtn">Kopyala</button>
+      <button class="btn" id="saveBtn">Kaydet (.txt)</button>
+      <button class="btn" id="copyBtn">Kopyala</button>
     </div>
     <div id="out" style="margin-top:14px"></div>
   </div>
 
-  <p class="note">İşlem sürerken bu sayfada kal. Başka uygulamaya geçersen iPad işlemi durdurabilir. Model ilk kullanımda bir kere iner, sonra internetsiz de çalışır.</p>
+  <div class="card" id="histCard" hidden>
+    <h2>Kayıtların</h2>
+    <ul class="hist" id="hist"></ul>
+  </div>
+
+  <p class="note" id="noteServer">Ses, sadece senin erişebildiğin gizli GitHub deposuna gönderilir ve orada büyük modelle işlenir. Yükleme bittikten sonra uygulamayı kapatabilirsin, sonuç burada “Kayıtların” listesine düşer. <button class="link" id="tokenReset">Erişim kodunu değiştir</button></p>
+  <p class="note" id="noteDevice" hidden>İşlem sürerken bu sayfada kal. Başka uygulamaya geçersen iPad işlemi durdurabilir. Model ilk kullanımda bir kere iner, sonra internetsiz de çalışır.</p>
 </main>
 
 <script>
@@ -104,110 +158,69 @@
   const statusEl = $('status'), bar = $('bar'), out = $('out');
   let lines = [], fileName = 'metin', wakeLock = null, busy = false;
 
-  // iPad/iPhone'da büyük model Safari'nin bellek sınırına takılıyor, orada gösterme
-  const touch = navigator.maxTouchPoints > 1 || /[?&]cpu=1/.test(location.search);
-  if (touch) $('model').querySelector('option[value="turbo"]').remove();
-  try {
-    const saved = localStorage.getItem('model');
-    $('model').value = saved && !(touch && saved === 'turbo') ? saved : 'small';
-  } catch {}
-  $('model').onchange = () => {
-    try { localStorage.setItem('model', $('model').value); } catch {}
-    preload();
+  const store = {
+    get(k, d = null) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+    del(k) { try { localStorage.removeItem(k); } catch {} },
   };
 
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+    // service worker ilk kez devreye girince çok çekirdek modu için bir kere yenile
+    if (!self.crossOriginIsolated) navigator.serviceWorker.ready.then(() => {
+      try {
+        if (sessionStorage.getItem('coi-reload')) return;
+        sessionStorage.setItem('coi-reload', '1');
+      } catch { return; }
+      location.reload();
+    });
+  }
   navigator.storage?.persist?.().catch(() => {});
 
-  const worker = new Worker('worker.js', { type: 'module' });
-
-  // indirme uzun süre ilerlemezse kullanıcıya ne yapacağını söyle
+  // ---------- ortak arayüz ----------
   let lastChange = Date.now();
-  setInterval(() => {
-    if (busy && /indiriliyor/.test(statusEl.textContent) && Date.now() - lastChange > 60000)
-      setStatus(statusEl.textContent.split(' — ')[0] +
-        ' — takıldı gibi. Sayfayı yenile ve tekrar dene; tamamlanan dosyalar tekrar inmez. "En iyi" seçiliyse "Dengeli"yi dene.', null, true);
-  }, 5000);
-
   function setStatus(text, progress, err = false) {
     if (text !== statusEl.textContent) lastChange = Date.now();
     statusEl.textContent = text;
     statusEl.classList.toggle('err', err);
     if (progress != null) { bar.hidden = false; bar.value = progress; }
+    else if (!err) bar.hidden = true;
   }
 
-  function setBusy(b) {
+  function setBusy(b, keepAwake = true) {
     busy = b;
     $('pickBtn').setAttribute('aria-disabled', b);
     $('model').disabled = b;
-    if (b) navigator.wakeLock?.request('screen').then((l) => (wakeLock = l)).catch(() => {});
-    else { wakeLock?.release().catch(() => {}); wakeLock = null; }
+    $('modeServer').disabled = $('modeDevice').disabled = b;
+    if (b && keepAwake) navigator.wakeLock?.request('screen').then((l) => (wakeLock = l)).catch(() => {});
+    else if (!b) { wakeLock?.release().catch(() => {}); wakeLock = null; }
   }
   // ekran kilidi sekme gizlenince düşer; geri gelince yeniden al
   document.addEventListener('visibilitychange', () => {
-    if (busy && document.visibilityState === 'visible')
+    if (busy && wakeLock && document.visibilityState === 'visible')
       navigator.wakeLock?.request('screen').then((l) => (wakeLock = l)).catch(() => {});
   });
 
-  // sayfa açılınca modeli hemen hazırla (ilk seferde iner, sonra cihazdan yüklenir)
-  function preload() {
-    setBusy(true);
-    setStatus('Model hazırlanıyor...', 0);
-    worker.postMessage({ type: 'load', model: $('model').value, cpu: touch });
+  function showResult(title, textLines) {
+    lines = textLines;
+    fileName = title.replace(/\.[^.]+$/, '') || 'metin';
+    $('resultTitle').textContent = title;
+    out.textContent = '';
+    for (const l of textLines) addLine(l);
+    $('resultCard').hidden = false;
+    $('actions').hidden = textLines.length === 0;
   }
 
-  worker.onmessage = ({ data }) => {
-    if (data.type === 'status') setStatus(data.text, data.progress);
-    if (data.type === 'loaded') {
-      setStatus('Model hazır ✓ Ses dosyası seçebilirsin.', 1);
-      setBusy(false);
-    }
-    if (data.type === 'line') {
-      lines.push(`[${data.time}] (${data.lang}) ${data.text}`);
-      const p = document.createElement('p');
-      p.innerHTML = `<span class="t"></span><span class="lang ${data.lang}">${data.lang.toUpperCase()}</span>`;
-      p.firstChild.textContent = data.time;
-      p.append(document.createTextNode(data.text));
-      out.append(p);
-    }
-    if (data.type === 'done') {
-      setStatus(`Bitti ✓ ${lines.length} bölüm`, 1);
-      $('actions').hidden = false;
-      setBusy(false);
-    }
-    if (data.type === 'error') { setStatus('Hata: ' + data.text, null, true); setBusy(false); }
-  };
-  preload();
-
-  async function decode(file) {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new Ctx({ sampleRate: 16000 });
-    try {
-      const buf = await ctx.decodeAudioData(await file.arrayBuffer());
-      if (buf.numberOfChannels === 1) return buf.getChannelData(0);
-      const a = buf.getChannelData(0), b = buf.getChannelData(1), m = new Float32Array(a.length);
-      for (let i = 0; i < a.length; i++) m[i] = (a[i] + b[i]) / 2;
-      return m;
-    } finally { ctx.close?.(); }
+  function addLine(line) {
+    const m = line.match(/^\[(\d\d:\d\d:\d\d)\] \((\w+)\) (.*)$/);
+    const p = document.createElement('p');
+    if (m) {
+      const t = document.createElement('span'); t.className = 't'; t.textContent = m[1];
+      const l = document.createElement('span'); l.className = 'lang ' + m[2]; l.textContent = m[2].toUpperCase();
+      p.append(t, l, document.createTextNode(m[3]));
+    } else p.textContent = line;
+    out.append(p);
   }
-
-  $('file').onchange = async (e) => {
-    const file = e.target.files[0];
-    e.target.value = '';
-    if (!file) return;
-    fileName = file.name.replace(/\.[^.]+$/, '') || 'metin';
-    lines = []; out.textContent = '';
-    $('resultCard').hidden = false; $('actions').hidden = true;
-    setBusy(true);
-    setStatus('Ses açılıyor...', 0);
-    try {
-      const audio = await decode(file);
-      worker.postMessage({ type: 'run', audio, model: $('model').value, langs: ['tr', 'en'], cpu: touch }, [audio.buffer]);
-    } catch (err) {
-      setStatus('Ses dosyası açılamadı: ' + (err?.message || err), null, true);
-      setBusy(false);
-    }
-  };
 
   $('saveBtn').onclick = async () => {
     const f = new File([lines.join('\n') + '\n'], fileName + '.txt', { type: 'text/plain' });
@@ -223,6 +236,324 @@
     $('copyBtn').textContent = 'Kopyalandı ✓';
     setTimeout(() => ($('copyBtn').textContent = 'Kopyala'), 1500);
   };
+
+  // ---------- mod seçimi ----------
+  let mode = store.get('mode', 'server');
+  function setMode(m) {
+    mode = m; store.set('mode', m);
+    $('modeServer').setAttribute('aria-pressed', m === 'server');
+    $('modeDevice').setAttribute('aria-pressed', m === 'device');
+    $('modelRow').hidden = m !== 'device';
+    $('noteServer').hidden = m !== 'server';
+    $('noteDevice').hidden = m !== 'device';
+    $('histCard').hidden = m !== 'server' || !token();
+    if (m === 'server') serverInit(); else deviceInit();
+  }
+  $('modeServer').onclick = () => setMode('server');
+  $('modeDevice').onclick = () => setMode('device');
+
+  $('file').onchange = (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (mode === 'server') serverRun(file); else deviceRun(file);
+  };
+
+  // ---------- sunucu modu (GitHub Actions) ----------
+  const REPO = 'Spryzenweb/sesyazi-data';
+  const API = 'https://api.github.com/repos/' + REPO;
+  const token = () => store.get('ghToken');
+
+  $('tokenLink').href = 'https://github.com/settings/personal-access-tokens/new?' + new URLSearchParams({
+    name: 'Ses Yazı iPad', description: 'Ses Yazı sitesinin sesyazi-data deposuna erişimi',
+    target_name: 'Spryzenweb', expires_in: '366', contents: 'write', actions: 'read',
+  });
+
+  async function gh(path, opts = {}) {
+    const res = await fetch(path.startsWith('http') ? path : API + path, {
+      ...opts, cache: 'no-store',
+      headers: {
+        Authorization: 'Bearer ' + token(), Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28', ...(opts.headers || {}),
+      },
+    });
+    if (!res.ok) {
+      const err = new Error(`GitHub ${res.status}`); err.status = res.status;
+      try { err.message += ': ' + (await res.json()).message; } catch {}
+      throw err;
+    }
+    return res;
+  }
+  const ghJSON = async (path, opts) => (await gh(path, opts)).json();
+  const ghRaw = async (path) => (await gh(path, { headers: { Accept: 'application/vnd.github.raw' } })).text();
+
+  $('tokenSave').onclick = async () => {
+    const t = $('tokenInput').value.trim();
+    if (!t) return;
+    store.set('ghToken', t);
+    setStatus('Erişim kodu kontrol ediliyor...');
+    try {
+      await ghJSON('');
+      $('tokenInput').value = '';
+      setStatus('Kurulum tamam ✓ Ses dosyası seçebilirsin.');
+      serverInit();
+    } catch (e) {
+      store.del('ghToken');
+      setStatus(e.status === 401 ? 'Kod geçersiz, tekrar kopyalayıp yapıştır.'
+        : e.status === 404 ? 'Kod sesyazi-data deposunu göremiyor. 2. adımda depoyu seçtiğinden emin ol.'
+        : 'Hata: ' + e.message, null, true);
+    }
+  };
+  $('tokenReset').onclick = () => { store.del('ghToken'); serverInit(); };
+
+  function serverInit() {
+    const has = !!token();
+    $('setup').hidden = has;
+    $('pickBtn').hidden = !has;
+    $('histCard').hidden = !has;
+    if (!has) { setStatus('Önce bir kerelik kurulumu yap.'); return; }
+    if (!busy) setStatus('Hazır. Ses dosyası seç.');
+    refreshHistory();
+    for (const j of store.get('jobs', [])) poll(j);
+  }
+
+  const fmtDur = (s) => s >= 3600 ? `${Math.floor(s / 3600)} sa ${Math.round(s / 60) % 60} dk` : s >= 60 ? `${Math.round(s / 60)} dk` : `${Math.round(s)} sn`;
+  const fmtDate = (sec) => new Date(sec * 1000).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+  function audioDuration(file) {
+    return new Promise((resolve) => {
+      const a = new Audio(); const url = URL.createObjectURL(file);
+      const done = (d) => { URL.revokeObjectURL(url); resolve(isFinite(d) ? d : 0); };
+      a.preload = 'metadata'; a.onloadedmetadata = () => done(a.duration); a.onerror = () => done(0);
+      setTimeout(() => done(0), 8000);
+      a.src = url;
+    });
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result).split(',')[1]);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+  }
+
+  // büyük dosyada yükleme ilerlemesini göstermek için fetch yerine XHR
+  function uploadBlob(b64, onProgress) {
+    return new Promise((resolve, reject) => {
+      const x = new XMLHttpRequest();
+      x.open('POST', API + '/git/blobs');
+      x.setRequestHeader('Authorization', 'Bearer ' + token());
+      x.setRequestHeader('Accept', 'application/vnd.github+json');
+      x.setRequestHeader('Content-Type', 'application/json');
+      x.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
+      x.onload = () => x.status < 300 ? resolve(JSON.parse(x.responseText).sha)
+        : reject(new Error(`Yükleme hatası ${x.status}: ${x.responseText.slice(0, 200)}`));
+      x.onerror = () => reject(new Error('Ağ hatası, internet bağlantını kontrol et.'));
+      x.send(JSON.stringify({ content: b64, encoding: 'base64' }));
+    });
+  }
+
+  async function serverRun(file) {
+    if (file.size > 95e6) { setStatus('Dosya çok büyük (en fazla ~95 MB).', null, true); return; }
+    setBusy(true);
+    try {
+      const dur = await audioDuration(file);
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const safe = file.name.replace(/[\/\\\x00-\x1f]/g, '_') || 'ses.m4a';
+
+      setStatus('Dosya hazırlanıyor...', 0);
+      const b64 = await fileToBase64(file);
+      const blob = await uploadBlob(b64, (p) =>
+        setStatus(`Yükleniyor: %${Math.round(p * 100)} (${(file.size / 1e6).toFixed(1)} MB)`, p * 0.95));
+
+      setStatus('Sunucuya iletiliyor...', 0.97);
+      const main = await ghJSON('/git/ref/heads/main');
+      const base = await ghJSON('/git/commits/' + main.object.sha);
+      const tree = await ghJSON('/git/trees', { method: 'POST', body: JSON.stringify({
+        base_tree: base.tree.sha, tree: [{ path: 'job/' + safe, mode: '100644', type: 'blob', sha: blob }] }) });
+      const commit = await ghJSON('/git/commits', { method: 'POST', body: JSON.stringify({
+        message: 'Ses: ' + safe, tree: tree.sha, parents: [main.object.sha] }) });
+      await ghJSON('/git/refs', { method: 'POST', body: JSON.stringify({ ref: 'refs/heads/job-' + id, sha: commit.sha }) });
+
+      const job = { id, name: file.name, dur, started: Math.floor(Date.now() / 1000) };
+      store.set('jobs', [job, ...store.get('jobs', [])]);
+      setStatus('Yüklendi ✓ Sunucu işliyor. İstersen uygulamayı kapatabilirsin, sonuç “Kayıtların” listesine düşer.', 1);
+      renderHistory();
+      poll(job);
+    } catch (e) {
+      setStatus('Hata: ' + e.message, null, true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const polling = new Set();
+  const jobState = {}; // id -> metin
+  async function poll(job) {
+    if (polling.has(job.id)) return;
+    polling.add(job.id);
+    while (store.get('jobs', []).some((j) => j.id === job.id)) {
+      try {
+        let meta = null;
+        try { meta = JSON.parse(await ghRaw('/contents/outbox/' + job.id + '.json')); } catch (e) { if (e.status !== 404) throw e; }
+        if (meta) {
+          store.set('jobs', store.get('jobs', []).filter((j) => j.id !== job.id));
+          await refreshHistory();
+          if (meta.ok) openResult({ ...meta, id: job.id, name: job.name });
+          break;
+        }
+        const runs = await ghJSON('/actions/runs?per_page=1&branch=job-' + encodeURIComponent(job.id));
+        const run = runs.workflow_runs[0];
+        const mins = Math.round((Date.now() / 1000 - job.started) / 60);
+        if (!run) jobState[job.id] = 'Sunucu başlatılıyor...';
+        else if (run.status === 'queued' || run.status === 'waiting' || run.status === 'pending') jobState[job.id] = 'Sırada bekliyor...';
+        else if (run.status === 'completed' && run.conclusion !== 'success') jobState[job.id] = 'Sonuç kaydediliyor...';
+        else {
+          let step = '';
+          try {
+            const jobs = await ghJSON('/actions/runs/' + run.id + '/jobs');
+            const cur = jobs.jobs[0]?.steps?.find((s) => s.status === 'in_progress');
+            step = cur?.name || '';
+          } catch {}
+          jobState[job.id] = (/Dil tespiti/.test(step) ? 'Yazıya dökülüyor' : /Kurulum|önbellek|checkout|python/i.test(step) ? 'Sunucu hazırlanıyor' : 'İşleniyor')
+            + ` · ${mins} dk geçti`;
+        }
+      } catch (e) {
+        jobState[job.id] = e.status === 401 ? 'Erişim kodu geçersiz' : 'Bağlantı bekleniyor...';
+      }
+      renderHistory();
+      await new Promise((r) => setTimeout(r, 15000));
+    }
+    delete jobState[job.id];
+    polling.delete(job.id);
+    renderHistory();
+  }
+
+  let historyItems = [];
+  async function refreshHistory() {
+    try {
+      historyItems = JSON.parse(await ghRaw('/contents/outbox/index.json'));
+    } catch (e) {
+      if (e.status !== 404) console.warn(e);
+    }
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const ul = $('hist'); ul.textContent = '';
+    const pending = store.get('jobs', []);
+    const add = (cls, name, meta, onClick) => {
+      const li = document.createElement('li'); li.className = cls;
+      const b = document.createElement('button');
+      const n = document.createElement('span'); n.className = 'name'; n.textContent = name;
+      const m = document.createElement('span'); m.className = 'meta'; m.textContent = meta;
+      b.append(n, m); if (onClick) b.onclick = onClick; else b.disabled = true;
+      li.append(b); ul.append(li);
+    };
+    for (const j of pending) add('pending', j.name, jobState[j.id] || 'Bekleniyor...');
+    for (const h of historyItems) {
+      const dur = h.total_s ? fmtDur(h.total_s) + ' · ' : '';
+      add(h.ok ? '' : 'failed', h.name || h.id, h.ok ? dur + fmtDate(h.finished) : 'Başarısız · ' + fmtDate(h.finished),
+        h.ok ? () => openResult(h) : null);
+    }
+    if (!pending.length && !historyItems.length) {
+      const li = document.createElement('li'); li.className = 'note'; li.style.padding = '8px 2px';
+      li.textContent = 'Henüz kayıt yok.'; ul.append(li);
+    }
+  }
+
+  async function openResult(h) {
+    setStatus('Metin açılıyor...');
+    try {
+      const txt = await ghRaw('/contents/outbox/' + h.id + '.txt');
+      showResult(h.name || h.id, txt.split('\n').filter(Boolean));
+      setStatus(`Bitti ✓ ${h.name || ''}`);
+      $('resultCard').scrollIntoView({ behavior: 'smooth' });
+    } catch (e) { setStatus('Metin açılamadı: ' + e.message, null, true); }
+  }
+
+  // ---------- cihaz modu (tarayıcıda Whisper) ----------
+  const touch = navigator.maxTouchPoints > 1 || /[?&]cpu=1/.test(location.search);
+  if (touch) $('model').querySelector('option[value="turbo"]').remove();
+  {
+    const saved = store.get('model');
+    $('model').value = saved && !(touch && saved === 'turbo') ? saved : 'small';
+  }
+  $('model').onchange = () => { store.set('model', $('model').value); preload(); };
+
+  let worker = null, loadedModel = null;
+  function getWorker() {
+    if (worker) return worker;
+    worker = new Worker('worker.js', { type: 'module' });
+    worker.onmessage = ({ data }) => {
+      if (data.type === 'status') setStatus(data.text, data.progress);
+      if (data.type === 'loaded') {
+        loadedModel = $('model').value;
+        setStatus('Model hazır ✓ Ses dosyası seçebilirsin.', 1);
+        setBusy(false);
+      }
+      if (data.type === 'line') {
+        const l = `[${data.time}] (${data.lang}) ${data.text}`;
+        lines.push(l); addLine(l);
+      }
+      if (data.type === 'done') {
+        setStatus(`Bitti ✓ ${lines.length} bölüm`, 1);
+        $('actions').hidden = false;
+        setBusy(false);
+      }
+      if (data.type === 'error') { setStatus('Hata: ' + data.text, null, true); setBusy(false); }
+    };
+    return worker;
+  }
+
+  // indirme uzun süre ilerlemezse kullanıcıya ne yapacağını söyle
+  setInterval(() => {
+    if (busy && /indiriliyor/.test(statusEl.textContent) && Date.now() - lastChange > 60000)
+      setStatus(statusEl.textContent.split(' — ')[0] +
+        ' — takıldı gibi. Sayfayı yenile ve tekrar dene; tamamlanan dosyalar tekrar inmez. Ya da “Sunucuda” modunu kullan.', null, true);
+  }, 5000);
+
+  function preload() {
+    setBusy(true);
+    setStatus('Model hazırlanıyor...', 0);
+    getWorker().postMessage({ type: 'load', model: $('model').value, cpu: touch });
+  }
+
+  function deviceInit() {
+    $('setup').hidden = true;
+    $('pickBtn').hidden = false;
+    if (loadedModel !== $('model').value) preload();
+    else setStatus('Model hazır ✓ Ses dosyası seçebilirsin.', 1);
+  }
+
+  async function decode(file) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx({ sampleRate: 16000 });
+    try {
+      const buf = await ctx.decodeAudioData(await file.arrayBuffer());
+      if (buf.numberOfChannels === 1) return buf.getChannelData(0);
+      const a = buf.getChannelData(0), b = buf.getChannelData(1), m = new Float32Array(a.length);
+      for (let i = 0; i < a.length; i++) m[i] = (a[i] + b[i]) / 2;
+      return m;
+    } finally { ctx.close?.(); }
+  }
+
+  async function deviceRun(file) {
+    showResult(file.name, []);
+    setBusy(true);
+    setStatus('Ses açılıyor...', 0);
+    try {
+      const audio = await decode(file);
+      getWorker().postMessage({ type: 'run', audio, model: $('model').value, langs: ['tr', 'en'], cpu: touch }, [audio.buffer]);
+    } catch (err) {
+      setStatus('Ses dosyası açılamadı: ' + (err?.message || err), null, true);
+      setBusy(false);
+    }
+  }
+
+  setMode(mode);
 </script>
 </body>
 </html>

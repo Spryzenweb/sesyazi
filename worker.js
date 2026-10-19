@@ -8,6 +8,8 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1';
 
 env.allowLocalModels = false;
+// çok çekirdek sadece sayfa izole ise mümkün (bkz. sw.js)
+if (self.crossOriginIsolated) env.backends.onnx.wasm.numThreads = Math.min(8, navigator.hardwareConcurrency || 4);
 
 const SR = 16000;
 const MAX_CHUNK = 28;   // Whisper penceresi 30 sn
