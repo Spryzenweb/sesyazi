@@ -309,7 +309,7 @@
       setStatus('Sunucuya bağlanılamadı: ' + e.message, null, true);
     }
   };
-  $('pwInput').onkeydown = (e) => e.key === 'Enter' && $('pwSave').click();
+  $('pwInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('pwSave').click(); });
   $('tokenReset').onclick = () => { store.del('ghToken'); serverInit(); };
 
   function serverInit() {
