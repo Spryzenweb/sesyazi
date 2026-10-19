@@ -1,6 +1,6 @@
 // Sayfayı önbelleğe alır ki internet zayıfken de açılsın.
-const CACHE = 'sesyazi-v11';
-const CORE = ['./', 'index.html', 'admin.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'sesyazi-v12';
+const CORE = ['./', 'index.html', 'admin.html', 'spiral.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));

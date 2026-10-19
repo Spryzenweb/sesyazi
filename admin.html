@@ -14,13 +14,13 @@
 <style>
   :root {
     --bg: #faf6f3; --card: #ffffff; --text: #241f26; --muted: #7a7079;
-    --line: #ece4df; --accent: #8a5cd0; --accent-text: #fff; --soft: #f3edfb;
+    --line: #ece4df; --accent: #8a5cd0; --accent-2: #d9688f; --accent-text: #fff; --soft: #f3edfb;
     --tr: #c2410c; --en: #1d4ed8; --err: #b42318; --mark: #fde68a;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #18151b; --card: #221e26; --text: #f1ecf3; --muted: #a69cab;
-      --line: #342e3a; --accent: #b393ec; --accent-text: #17131b; --soft: #2b2436;
+      --line: #342e3a; --accent: #b393ec; --accent-2: #f08fb0; --accent-text: #17131b; --soft: #2b2436;
       --tr: #fb923c; --en: #93b4ff; --err: #f97066; --mark: #6b5a1e;
     }
   }
@@ -84,12 +84,28 @@
   .lock { max-width: 420px; margin: 40px auto; }
   .lock .row { display: flex; gap: 8px; margin-top: 12px; }
   [hidden] { display: none !important; }
+  .bg-spiral {
+    position: fixed; z-index: 0; pointer-events: none; opacity: .22;
+    width: min(62vw, 440px); height: auto; top: -40px; right: -90px;
+    transform-origin: 62% 38%; animation: sway 18s ease-in-out infinite alternate;
+  }
+  .bg-spiral.b { top: auto; right: auto; bottom: -70px; left: -110px; width: min(80vw, 560px); opacity: .14; transform: rotate(180deg); animation: none; }
+  @media (prefers-color-scheme: dark) { .bg-spiral { opacity: .3; } .bg-spiral.b { opacity: .18; } }
+  main { position: relative; z-index: 1; }
+  h1 { display: flex; align-items: center; gap: 10px; }
+  @keyframes turn { to { transform: rotate(360deg); } }
+  @keyframes sway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+  .spin { animation: turn 2.4s linear infinite; vertical-align: middle; }
+  .list .dot { float: left; margin: 2px 10px 0 0; }
+  @media (prefers-reduced-motion: reduce) { .bg-spiral, .spin { animation: none !important; } }
 </style>
 </head>
 <body>
+<span data-spiral="fib" data-size="440" class="bg-spiral"></span>
+<span data-spiral="fib" data-size="560" class="bg-spiral b"></span>
 <main>
   <header>
-    <h1>Buse'nin notları</h1>
+    <h1><span data-spiral="arch" data-size="30" data-width="7" data-turns="2.6"></span>Buse'nin notları</h1>
     <a href="./">← Ses Yazı</a>
   </header>
 
@@ -146,6 +162,7 @@
   </div>
 </main>
 
+<script src="spiral.js"></script>
 <script>
   const $ = (id) => document.getElementById(id);
   const REPO = 'Spryzenweb/sesyazi-data';
@@ -199,7 +216,11 @@
 
   const fmtDur = (s) => s >= 3600 ? `${Math.floor(s / 3600)} sa ${Math.round(s / 60) % 60} dk` : s >= 60 ? `${Math.round(s / 60)} dk` : `${Math.round(s || 0)} sn`;
   const fmtDate = (sec) => new Date(sec * 1000).toLocaleString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  const listStatus = (t, err) => { $('listStatus').textContent = t; $('listStatus').className = 'status' + (err ? ' err' : ''); };
+  const listStatus = (t, err) => {
+    const el = $('listStatus'); el.textContent = ''; el.className = 'status' + (err ? ' err' : '');
+    if (t && !err) el.append(Spiral.make('arch', 16, { width: 8, className: 'spin' }), ' ');
+    if (t) el.append(t);
+  };
 
   async function start() {
     $('lock').hidden = true; $('app').hidden = false;

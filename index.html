@@ -117,12 +117,42 @@
   .note { color: var(--muted); font-size: 13px; text-align: center; margin-top: 8px; }
   .link { background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; padding: 0; }
   [hidden] { display: none !important; }
+  .om {
+    font-weight: 400; display: inline-block; margin-left: 2px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .foot-om { text-align: center; font-size: 26px; margin: 22px 0 0; opacity: .55; }
+
+  /* ---- sarmallar ---- */
+  .bg-spiral {
+    position: fixed; z-index: 0; pointer-events: none; opacity: .22;
+    width: min(62vw, 440px); height: auto; top: -40px; right: -90px;
+    transform-origin: 62% 38%; animation: sway 18s ease-in-out infinite alternate;
+  }
+  .bg-spiral.b { top: auto; right: auto; bottom: -70px; left: -110px; width: min(80vw, 560px); opacity: .14; transform: rotate(180deg); animation: none; }
+  @media (prefers-color-scheme: dark) { .bg-spiral { opacity: .3; } .bg-spiral.b { opacity: .18; } }
+  main { position: relative; z-index: 1; }
+  @keyframes turn { to { transform: rotate(360deg); } }
+  @keyframes sway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+  .spin { animation: turn 2.4s linear infinite; }
+  .drop:hover .icon svg, .drop:active .icon svg { animation: turn 1.6s ease-in-out; }
+  .sprog { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+  .sprog-label { display: block; color: var(--muted); font-size: 14px; }
+  .sprog svg path.track { opacity: .15; }
+  .sprog svg path.fill { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .4s ease; }
+  .sprog-pct { font-size: 22px; font-weight: 750; font-variant-numeric: tabular-nums;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .rec .dot svg { display: block; }
+  @media (prefers-reduced-motion: reduce) { .bg-spiral, .spin, .drop .icon svg { animation: none !important; } }
 </style>
 </head>
 <body>
+<span data-spiral="fib" data-size="440" class="bg-spiral"></span>
+<span data-spiral="fib" data-size="560" class="bg-spiral b"></span>
 <main>
   <div class="top"><a href="admin.html" id="allLink" hidden>Tüm notlar →</a></div>
-  <h1 class="hello"><span id="greet">Merhaba</span>, <span class="name">Buse</span> <span aria-hidden="true">👋</span></h1>
+  <h1 class="hello"><span id="greet">Merhaba</span>, <span class="name">Buse</span> <span class="om" aria-hidden="true">ॐ</span></h1>
   <p class="sub">Ders kaydını seç, yazıya dökeyim. Türkçe ve İngilizce kısımları ayrı ayrı tanırım.</p>
 
   <div class="card">
@@ -137,14 +167,17 @@
 
     <label class="drop" id="pickBtn" hidden>
       <span class="icon" aria-hidden="true">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/></svg>
+        <span data-spiral="arch" data-size="34" data-width="7" data-turns="2.6" data-stroke="#fff"></span>
       </span>
       <span class="big">Ses kaydı seç</span>
       <span class="small">m4a, mp3, wav… uzunluk sınırı yok</span>
       <input id="file" type="file" accept="audio/*,video/*,.m4a,.mp3,.wav,.aac,.ogg,.opus" hidden>
     </label>
     <div class="status" id="status"></div>
-    <progress id="bar" max="1" value="0" hidden></progress>
+    <div class="sprog" id="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" hidden>
+      <span data-spiral="arch" data-size="56" data-width="6" class="sprog-svg"></span>
+      <span><span class="sprog-pct" id="barPct"></span><span class="sprog-label" id="barLabel"></span></span>
+    </div>
   </div>
 
   <div class="card" id="resultCard" hidden>
@@ -172,11 +205,18 @@
   </div>
 
   <p class="note" id="note" hidden>Kayıtların sadece sana ait gizli bir depoda işlenir. Yükleme bitince uygulamayı kapatabilirsin; metin hazır olunca burada görünür.<br><button class="link" id="tokenReset">Şifreyi yeniden gir</button></p>
+  <p class="foot-om"><span class="om" aria-hidden="true">ॐ</span></p>
 </main>
 
+<script src="spiral.js"></script>
 <script>
   const $ = (id) => document.getElementById(id);
   const statusEl = $('status'), bar = $('bar'), out = $('out');
+
+  // ilerleme: sarmal, yükleme ilerledikçe merkezden dışarı doğru çizilir
+  const barFill = bar.querySelector('path');
+  const barTrack = barFill.cloneNode(); barTrack.setAttribute('class', 'track');
+  barFill.setAttribute('class', 'fill'); barFill.before(barTrack);
   let lines = [], fileName = 'metin', busy = false, plain = true;
 
   const store = {
@@ -194,10 +234,15 @@
 
   // ---------- ortak arayüz ----------
   function setStatus(text, progress, kind = '') {
-    statusEl.textContent = text;
+    statusEl.textContent = progress != null ? '' : text;
     statusEl.className = 'status ' + kind;
-    if (progress != null) { bar.hidden = false; bar.value = progress; }
-    else bar.hidden = true;
+    if (progress != null) {
+      bar.hidden = false;
+      $('barLabel').textContent = text;
+      barFill.style.strokeDashoffset = String(1 - progress);
+      $('barPct').textContent = '%' + Math.round(progress * 100);
+      bar.setAttribute('aria-valuenow', Math.round(progress * 100));
+    } else bar.hidden = true;
   }
 
   function setBusy(b) {
@@ -381,7 +426,7 @@
 
       setStatus('Dosya hazırlanıyor...', 0);
       const b64 = await fileToBase64(file);
-      const blob = await uploadBlob(b64, (p) => setStatus(`Yükleniyor… %${Math.round(p * 100)}`, p * 0.95));
+      const blob = await uploadBlob(b64, (p) => setStatus('Yükleniyor…', p * 0.95));
 
       setStatus('Neredeyse bitti...', 0.97);
       const main = await ghJSON('/git/ref/heads/main');
@@ -460,7 +505,8 @@
     const add = (cls, icon, name, meta, onClick) => {
       const li = document.createElement('li');
       const b = document.createElement('button'); b.className = 'rec ' + cls;
-      const d = document.createElement('span'); d.className = 'dot'; d.textContent = icon;
+      const d = document.createElement('span'); d.className = 'dot';
+      if (typeof icon === 'string') d.textContent = icon; else d.append(icon);
       const body = document.createElement('span'); body.className = 'body';
       const n = document.createElement('span'); n.className = 'name'; n.textContent = name.replace(/\.[^.]+$/, '');
       const m = document.createElement('span'); m.className = 'meta'; m.textContent = meta;
@@ -471,9 +517,9 @@
       } else b.disabled = true;
       li.append(b); ul.append(li);
     };
-    for (const j of pending) add('pending', '⏳', j.name, jobState[j.id] || 'Bekleniyor…');
+    for (const j of pending) add('pending', Spiral.make('arch', 26, { width: 7, className: 'spin' }), j.name, jobState[j.id] || 'Bekleniyor…');
     for (const h of historyItems.slice(0, 10)) {
-      if (h.ok) add('', '📄', h.name || h.id, `${fmtDur(h.total_s)} · ${fmtDate(h.finished)}`, () => openResult(h));
+      if (h.ok) add('', Spiral.make('arch', 24, { width: 7, turns: 2.6 }), h.name || h.id, `${fmtDur(h.total_s)} · ${fmtDate(h.finished)}`, () => openResult(h));
       else add('failed', '⚠️', h.name || h.id, 'İşlenemedi · ' + fmtDate(h.finished));
     }
     if (!pending.length && !historyItems.length) {
