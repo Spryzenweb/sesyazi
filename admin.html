@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ses Yazı Panel</title>
+<meta name="description" content="Ses Yazı ile çıkan tüm metinler.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ses Yazı Panel">
+<meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171a" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
+    --line: #e4e2dc; --accent: #2f5bd3; --accent-text: #fff; --soft: #eef2fc;
+    --tr: #c2410c; --en: #1d4ed8; --err: #b42318; --mark: #fde68a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16171a; --card: #1f2024; --text: #ececee; --muted: #9a9aa2;
+      --line: #2e3036; --accent: #6e8ff0; --accent-text: #0b0c0e; --soft: #252b3d;
+      --tr: #fb923c; --en: #93b4ff; --err: #f97066; --mark: #6b5a1e;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  }
+  main { max-width: 1180px; margin: 0 auto; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 8px 0 16px; }
+  h1 { font-size: 28px; margin: 0; letter-spacing: -0.02em; }
+  h2 { font-size: 18px; margin: 0; overflow-wrap: anywhere; }
+  a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stat .label { color: var(--muted); font-size: 13px; }
+  .stat .value { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .stat .hint { color: var(--muted); font-size: 12px; }
+  .meter { height: 6px; background: var(--line); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .meter > div { height: 100%; background: var(--accent); }
+  .layout { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 820px) { .layout { grid-template-columns: 1fr; } }
+  input[type=search], input[type=password] {
+    width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--text);
+  }
+  .list { list-style: none; margin: 12px 0 0; padding: 0; max-height: 70vh; overflow: auto; }
+  .list li + li { border-top: 1px solid var(--line); }
+  .list button {
+    width: 100%; text-align: left; background: none; border: 0; color: var(--text); font: inherit;
+    padding: 11px 8px; border-radius: 10px; cursor: pointer; display: block;
+  }
+  .list button[aria-current="true"] { background: var(--soft); }
+  .list .name { font-weight: 600; overflow-wrap: anywhere; display: block; }
+  .list .meta { color: var(--muted); font-size: 13px; }
+  .list .snip { color: var(--muted); font-size: 13px; display: block; margin-top: 2px; }
+  .list .failed .meta { color: var(--err); }
+  mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1px; }
+  .viewer-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .viewer-meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+  .btn {
+    padding: 9px 13px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+  .btn.danger { color: var(--err); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; padding: 2px; background: var(--bg); }
+  .seg button { border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  #text p { margin: 0 0 12px; }
+  .t { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; margin-right: 6px; }
+  .lang { font-size: 11px; font-weight: 700; margin-right: 6px; }
+  .lang.tr { color: var(--tr); } .lang.en { color: var(--en); }
+  .empty { color: var(--muted); padding: 24px 4px; text-align: center; }
+  .status { font-size: 14px; color: var(--muted); margin-top: 10px; min-height: 1.4em; }
+  .status.err { color: var(--err); }
+  .lock { max-width: 420px; margin: 40px auto; }
+  .lock .row { display: flex; gap: 8px; margin-top: 12px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Panel</h1>
+    <a href="./">← Ses Yazı</a>
+  </header>
+
+  <div class="card lock" id="lock" hidden>
+    <h2>Şifreni gir</h2>
+    <div class="row">
+      <input id="pw" type="password" placeholder="Şifre" autocomplete="current-password">
+      <button class="btn primary" id="pwBtn">Aç</button>
+    </div>
+    <div class="status" id="lockStatus"></div>
+  </div>
+
+  <div id="app" hidden>
+    <div class="stats">
+      <div class="card stat"><div class="label">Kayıt</div><div class="value" id="sCount">–</div><div class="hint" id="sFailed"></div></div>
+      <div class="card stat"><div class="label">Toplam ses</div><div class="value" id="sAudio">–</div><div class="hint">yazıya dökülen</div></div>
+      <div class="card stat">
+        <div class="label">Bu ay sunucu süresi (yaklaşık)</div><div class="value" id="sMin">–</div>
+        <div class="meter"><div id="sMeter" style="width:0"></div></div>
+        <div class="hint" id="sMinHint">ayda 2000 dk ücretsiz</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <section class="card">
+        <input type="search" id="q" placeholder="Ara: dosya adı veya metin içinde…" autocomplete="off">
+        <div class="status" id="listStatus"></div>
+        <ul class="list" id="list"></ul>
+      </section>
+
+      <section class="card" id="viewer">
+        <div class="empty" id="viewerEmpty">Soldan bir kayıt seç.</div>
+        <div id="viewerBody" hidden>
+          <div class="viewer-head">
+            <div>
+              <h2 id="vName"></h2>
+              <div class="viewer-meta" id="vMeta"></div>
+            </div>
+            <div class="seg" role="group" aria-label="Görünüm">
+              <button id="viewTagged" aria-pressed="true">Zamanlı</button>
+              <button id="viewPlain" aria-pressed="false">Düz metin</button>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="aNotes">📝 Notlar'a aktar</button>
+            <button class="btn" id="aCopy">Kopyala</button>
+            <button class="btn" id="aSave">İndir (.txt)</button>
+            <button class="btn danger" id="aDel">Sil</button>
+          </div>
+          <div id="text"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const REPO = 'Spryzenweb/sesyazi-data';
+  const API = 'https://api.github.com/repos/' + REPO;
+  const FREE_MIN = 2000;
+
+  const store = {
+    get(k, d = null) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+  const token = () => store.get('ghToken');
+
+  async function gh(path, opts = {}) {
+    const res = await fetch(API + path, {
+      ...opts, cache: 'no-store',
+      headers: { Authorization: 'Bearer ' + token(), Accept: 'application/vnd.github+json',
+                 'X-GitHub-Api-Version': '2022-11-28', ...(opts.headers || {}) },
+    });
+    if (!res.ok) {
+      const err = new Error(`GitHub ${res.status}`); err.status = res.status;
+      try { err.message += ': ' + (await res.json()).message; } catch {}
+      throw err;
+    }
+    return res;
+  }
+  const ghJSON = async (p, o) => (await gh(p, o)).json();
+  const ghRaw = async (p) => (await gh(p, { headers: { Accept: 'application/vnd.github.raw' } })).text();
+
+  // ---------- kilit (ana sayfayla aynı şifre ve key.json) ----------
+  const b64d = (x) => Uint8Array.from(atob(x), (c) => c.charCodeAt(0));
+  async function unlock(pw) {
+    const k = await (await fetch('key.json', { cache: 'no-store' })).json();
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', hash: 'SHA-256', salt: b64d(k.salt), iterations: k.iter },
+      base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(k.iv) }, key, b64d(k.data)));
+  }
+  $('pwBtn').onclick = async () => {
+    const pw = $('pw').value; if (!pw) return;
+    $('lockStatus').textContent = 'Kontrol ediliyor...'; $('lockStatus').className = 'status';
+    try { store.set('ghToken', await unlock(pw)); }
+    catch { $('lockStatus').textContent = 'Şifre yanlış, tekrar dene.'; $('lockStatus').className = 'status err'; return; }
+    $('pw').value = ''; start();
+  };
+  $('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('pwBtn').click(); });
+
+  // ---------- veri ----------
+  let items = [];          // index.json
+  const texts = new Map(); // id -> metin (aramada ve görüntülemede önbellek)
+  let current = null, plain = false;
+
+  const fmtDur = (s) => s >= 3600 ? `${Math.floor(s / 3600)} sa ${Math.round(s / 60) % 60} dk` : s >= 60 ? `${Math.round(s / 60)} dk` : `${Math.round(s || 0)} sn`;
+  const fmtDate = (sec) => new Date(sec * 1000).toLocaleString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const listStatus = (t, err) => { $('listStatus').textContent = t; $('listStatus').className = 'status' + (err ? ' err' : ''); };
+
+  async function start() {
+    $('lock').hidden = true; $('app').hidden = false;
+    listStatus('Yükleniyor...');
+    try {
+      items = JSON.parse(await ghRaw('/contents/outbox/index.json'));
+    } catch (e) {
+      if (e.status === 401) { $('app').hidden = true; $('lock').hidden = false; return; }
+      if (e.status !== 404) { listStatus('Liste alınamadı: ' + e.message, true); return; }
+      items = [];
+    }
+    listStatus('');
+    renderStats(); renderList();
+  }
+
+  function renderStats() {
+    const ok = items.filter((i) => i.ok);
+    $('sCount').textContent = ok.length;
+    const failed = items.length - ok.length;
+    $('sFailed').textContent = failed ? `${failed} başarısız` : 'hepsi başarılı';
+    $('sAudio').textContent = fmtDur(ok.reduce((a, i) => a + (i.total_s || 0), 0));
+    const now = new Date(), monthStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1) / 1000;
+    const used = Math.round(items.filter((i) => i.finished >= monthStart).reduce((a, i) => a + (i.minutes || 0) + 2, 0));
+    $('sMin').textContent = `${used} / ${FREE_MIN} dk`;
+    $('sMeter').style.width = Math.min(100, (used / FREE_MIN) * 100) + '%';
+    $('sMinHint').textContent = `yaklaşık ${Math.max(0, FREE_MIN - used)} dk kaldı · ayın 1'inde sıfırlanır`;
+  }
+
+  // ---------- arama ----------
+  let searchSeq = 0;
+  async function loadAllTexts(seq) {
+    const missing = items.filter((i) => i.ok && !texts.has(i.id));
+    let done = 0;
+    for (const i of missing) {
+      if (seq !== searchSeq) return;
+      listStatus(`Metinler taranıyor ${++done}/${missing.length}...`);
+      try { texts.set(i.id, await ghRaw('/contents/outbox/' + i.id + '.txt')); } catch {}
+    }
+    listStatus('');
+  }
+  const norm = (s) => s.toLocaleLowerCase('tr-TR');
+  $('q').addEventListener('input', async () => {
+    const seq = ++searchSeq;
+    if ($('q').value.trim().length >= 2) await loadAllTexts(seq);
+    if (seq === searchSeq) renderList();
+  });
+
+  function snippet(text, q) {
+    const i = norm(text).indexOf(q);
+    if (i < 0) return null;
+    const a = Math.max(0, i - 50), b = Math.min(text.length, i + q.length + 70);
+    return { pre: (a ? '…' : '') + text.slice(a, i).replace(/\[\d\d:\d\d:\d\d\] \(\w+\) /g, ''), hit: text.slice(i, i + q.length), post: text.slice(i + q.length, b).replace(/\[\d\d:\d\d:\d\d\] \(\w+\) /g, '') + (b < text.length ? '…' : '') };
+  }
+
+  function renderList() {
+    const ul = $('list'); ul.textContent = '';
+    const q = norm($('q').value.trim());
+    let shown = 0;
+    for (const it of items) {
+      const nameHit = !q || norm(it.name || '').includes(q);
+      const snip = q && texts.has(it.id) ? snippet(texts.get(it.id), q) : null;
+      if (q && !nameHit && !snip) continue;
+      shown++;
+      const li = document.createElement('li'); if (!it.ok) li.className = 'failed';
+      const b = document.createElement('button');
+      b.setAttribute('aria-current', current?.id === it.id);
+      const n = document.createElement('span'); n.className = 'name'; n.textContent = it.name || it.id;
+      const m = document.createElement('span'); m.className = 'meta';
+      m.textContent = it.ok ? `${fmtDur(it.total_s)} · ${fmtDate(it.finished)}` : `Başarısız · ${fmtDate(it.finished)}`;
+      b.append(n, m);
+      if (snip) {
+        const s = document.createElement('span'); s.className = 'snip';
+        const mk = document.createElement('mark'); mk.textContent = snip.hit;
+        s.append(snip.pre, mk, snip.post); b.append(s);
+      }
+      b.onclick = () => openItem(it);
+      li.append(b); ul.append(li);
+    }
+    if (!shown) {
+      const li = document.createElement('li'); li.className = 'empty';
+      li.textContent = items.length ? 'Eşleşen kayıt yok.' : 'Henüz kayıt yok.'; ul.append(li);
+    }
+  }
+
+  // ---------- görüntüleme ----------
+  const tagRe = /^\[(\d\d:\d\d:\d\d)\] \((\w+)\) (.*)$/;
+  const lines = () => (texts.get(current?.id) || '').split('\n').filter(Boolean);
+  const plainText = () => [current.name.replace(/\.[^.]+$/, ''), '', ...lines().flatMap((l) => [l.replace(tagRe, '$3'), ''])].join('\n').trim() + '\n';
+
+  async function openItem(it) {
+    current = it; renderList();
+    $('viewerEmpty').hidden = true; $('viewerBody').hidden = false;
+    $('vName').textContent = it.name || it.id;
+    $('vMeta').textContent = it.ok ? `${fmtDur(it.total_s)} ses · ${fmtDate(it.finished)} · işlem ${Math.round(it.minutes || 0)} dk` : 'Bu kayıt işlenemedi.';
+    $('text').textContent = 'Yükleniyor...';
+    if (it.ok && !texts.has(it.id)) {
+      try { texts.set(it.id, await ghRaw('/contents/outbox/' + it.id + '.txt')); }
+      catch (e) { $('text').textContent = 'Metin alınamadı: ' + e.message; return; }
+    }
+    if (current?.id === it.id) renderText();
+    if (matchMedia('(max-width: 820px)').matches) $('viewer').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function renderText() {
+    const box = $('text'); box.textContent = '';
+    const q = norm($('q').value.trim());
+    for (const l of lines()) {
+      const m = l.match(tagRe), p = document.createElement('p');
+      if (m && !plain) {
+        const t = document.createElement('span'); t.className = 't'; t.textContent = m[1];
+        const g = document.createElement('span'); g.className = 'lang ' + m[2]; g.textContent = m[2].toUpperCase();
+        p.append(t, g);
+      }
+      const body = m ? m[3] : l;
+      const i = q ? norm(body).indexOf(q) : -1;
+      if (i >= 0) {
+        const mk = document.createElement('mark'); mk.textContent = body.slice(i, i + q.length);
+        p.append(body.slice(0, i), mk, body.slice(i + q.length));
+      } else p.append(body);
+      box.append(p);
+    }
+    if (!box.childNodes.length) box.textContent = current.ok ? 'Bu kayıtta metin yok.' : '';
+  }
+
+  $('viewTagged').onclick = () => { plain = false; $('viewTagged').setAttribute('aria-pressed', true); $('viewPlain').setAttribute('aria-pressed', false); renderText(); };
+  $('viewPlain').onclick = () => { plain = true; $('viewPlain').setAttribute('aria-pressed', true); $('viewTagged').setAttribute('aria-pressed', false); renderText(); };
+
+  const flash = (btn, t) => { const o = btn.textContent; btn.textContent = t; setTimeout(() => (btn.textContent = o), 1800); };
+  $('aNotes').onclick = async () => {
+    const text = plainText();
+    if (navigator.share) { try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+    await navigator.clipboard.writeText(text); flash($('aNotes'), 'Kopyalandı, Notlar\'a yapıştır ✓');
+  };
+  $('aCopy').onclick = async () => { await navigator.clipboard.writeText(plain ? plainText() : lines().join('\n')); flash($('aCopy'), 'Kopyalandı ✓'); };
+  $('aSave').onclick = async () => {
+    const f = new File([plain ? plainText() : lines().join('\n') + '\n'], current.name.replace(/\.[^.]+$/, '') + '.txt', { type: 'text/plain' });
+    if (navigator.canShare?.({ files: [f] })) { try { await navigator.share({ files: [f] }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  };
+
+  // silme: metin + bilgi dosyası + listeden çıkar
+  async function deleteFile(path, message) {
+    try {
+      const { sha } = await ghJSON('/contents/' + path);
+      await gh('/contents/' + path, { method: 'DELETE', body: JSON.stringify({ message, sha }) });
+    } catch (e) { if (e.status !== 404) throw e; }
+  }
+  $('aDel').onclick = async () => {
+    const it = current;
+    if (!confirm(`“${it.name}” silinsin mi? Bu geri alınamaz.`)) return;
+    $('aDel').disabled = true;
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const f = await ghJSON('/contents/outbox/index.json');
+          const idx = JSON.parse(new TextDecoder().decode(b64d(f.content.replace(/\n/g, '')))).filter((x) => x.id !== it.id);
+          const bytes = new TextEncoder().encode(JSON.stringify(idx));
+          let bin = ''; for (let k = 0; k < bytes.length; k += 8192) bin += String.fromCharCode(...bytes.subarray(k, k + 8192));
+          const content = btoa(bin);
+          await gh('/contents/outbox/index.json', { method: 'PUT', body: JSON.stringify({ message: 'Sil: ' + it.id, content, sha: f.sha }) });
+          break;
+        } catch (e) { if (e.status !== 409 || attempt === 2) throw e; }
+      }
+      await deleteFile(`outbox/${it.id}.txt`, 'Sil: ' + it.id);
+      await deleteFile(`outbox/${it.id}.json`, 'Sil: ' + it.id);
+      items = items.filter((x) => x.id !== it.id); texts.delete(it.id);
+      current = null; $('viewerBody').hidden = true; $('viewerEmpty').hidden = false;
+      renderStats(); renderList();
+    } catch (e) {
+      alert('Silinemedi: ' + e.message);
+    } finally { $('aDel').disabled = false; }
+  };
+
+  if (token()) start(); else $('lock').hidden = false;
+</script>
+</body>
+</html>
