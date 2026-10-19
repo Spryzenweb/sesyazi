@@ -41,25 +41,30 @@ function dtypeFor(key, dev) {
   return { encoder_model: dev.f16 ? 'fp16' : 'fp32', decoder_model_merged: 'q4' };
 }
 
-async function load(key) {
+async function load(key, cpuOnly = false) {
   if (loaded?.key === key) return loaded;
   loaded = null;
   const id = MODELS[key];
-  const files = new Map();
+  const files = new Map(), started = new Set(), finished = new Set();
   const progress_callback = (p) => {
+    if (p.status === 'initiate') started.add(p.file);
+    if (p.status === 'done') {
+      finished.add(p.file);
+      if (finished.size === started.size)
+        post('status', { text: 'Model başlatılıyor (1-2 dk sürebilir)...', progress: 1 });
+    }
     if (p.status === 'progress' && p.total) {
       files.set(p.file, [p.loaded, p.total]);
       let a = 0, b = 0;
       for (const [l, t] of files.values()) { a += l; b += t; }
-      post('status', a >= b
-        ? { text: 'İndirme bitti, model başlatılıyor (1-2 dk sürebilir)...', progress: 1 }
-        : { text: `Model indiriliyor: ${(a / 1e6).toFixed(0)} / ${(b / 1e6).toFixed(0)} MB`, progress: a / b });
+      post('status', { text: `Model indiriliyor: ${(a / 1e6).toFixed(0)} / ${(b / 1e6).toFixed(0)} MB`, progress: a / b });
     }
   };
   post('status', { text: 'Model hazırlanıyor...', progress: 0 });
   const processor = await AutoProcessor.from_pretrained(id, { progress_callback });
 
-  let dev = await pickDevice();
+  // iPad'de WebGPU bellek yüzünden takılabiliyor; orada CPU kullan
+  let dev = cpuOnly ? { device: 'wasm' } : await pickDevice();
   let model;
   try {
     model = await WhisperForConditionalGeneration.from_pretrained(id, {
@@ -143,8 +148,8 @@ function fmt(t) {
   return `${p(Math.floor(s / 3600))}:${p(Math.floor(s / 60) % 60)}:${p(s % 60)}`;
 }
 
-async function run({ audio, model: key, langs: allowed }) {
-  const m = await load(key);
+async function run({ audio, model: key, langs: allowed, cpu }) {
+  const m = await load(key, cpu);
   const total = audio.length / SR;
 
   post('status', { text: 'Diller tespit ediliyor...', progress: 0 });
@@ -181,7 +186,7 @@ async function run({ audio, model: key, langs: allowed }) {
 
 self.onmessage = async ({ data }) => {
   try {
-    if (data.type === 'load') { await load(data.model); post('loaded'); }
+    if (data.type === 'load') { await load(data.model, data.cpu); post('loaded'); }
     if (data.type === 'run') await run(data);
   } catch (e) {
     post('error', { text: String(e?.message ?? e) });

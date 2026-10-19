@@ -105,7 +105,7 @@
   let lines = [], fileName = 'metin', wakeLock = null, busy = false;
 
   // iPad/iPhone'da büyük model Safari'nin bellek sınırına takılıyor, orada gösterme
-  const touch = navigator.maxTouchPoints > 1;
+  const touch = navigator.maxTouchPoints > 1 || /[?&]cpu=1/.test(location.search);
   if (touch) $('model').querySelector('option[value="turbo"]').remove();
   try {
     const saved = localStorage.getItem('model');
@@ -153,7 +153,7 @@
   function preload() {
     setBusy(true);
     setStatus('Model hazırlanıyor...', 0);
-    worker.postMessage({ type: 'load', model: $('model').value });
+    worker.postMessage({ type: 'load', model: $('model').value, cpu: touch });
   }
 
   worker.onmessage = ({ data }) => {
@@ -202,7 +202,7 @@
     setStatus('Ses açılıyor...', 0);
     try {
       const audio = await decode(file);
-      worker.postMessage({ type: 'run', audio, model: $('model').value, langs: ['tr', 'en'] }, [audio.buffer]);
+      worker.postMessage({ type: 'run', audio, model: $('model').value, langs: ['tr', 'en'], cpu: touch }, [audio.buffer]);
     } catch (err) {
       setStatus('Ses dosyası açılamadı: ' + (err?.message || err), null, true);
       setBusy(false);
