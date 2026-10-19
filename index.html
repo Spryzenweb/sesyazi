@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ses Yazı</title>
+<meta name="description" content="Ses kayıtlarını cihazda yazıya döker. Türkçe + İngilizce karışık konuşma.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ses Yazı">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171a" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
+    --line: #e4e2dc; --accent: #2f5bd3; --accent-text: #fff;
+    --tr: #c2410c; --en: #1d4ed8; --err: #b42318;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16171a; --card: #1f2024; --text: #ececee; --muted: #9a9aa2;
+      --line: #2e3036; --accent: #6e8ff0; --accent-text: #0b0c0e;
+      --tr: #fb923c; --en: #93b4ff; --err: #f97066;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 17px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 28px; margin: 8px 0 4px; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 15px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+  .pick {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; padding: 18px; border: 0; border-radius: 14px;
+    background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600; font-size: 19px;
+    cursor: pointer;
+  }
+  .pick[aria-disabled="true"] { opacity: .5; pointer-events: none; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+  .row label { color: var(--muted); font-size: 15px; }
+  select {
+    font: inherit; font-size: 15px; padding: 8px 10px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--text);
+  }
+  .status { font-size: 15px; margin-top: 14px; min-height: 1.5em; }
+  .status.err { color: var(--err); }
+  progress { width: 100%; height: 8px; margin-top: 10px; accent-color: var(--accent); }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .actions button {
+    flex: 1 1 140px; padding: 12px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card); color: var(--text); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  #out p { margin: 0 0 12px; }
+  .t { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; margin-right: 6px; }
+  .lang { font-size: 12px; font-weight: 700; margin-right: 6px; }
+  .lang.tr { color: var(--tr); } .lang.en { color: var(--en); }
+  .note { color: var(--muted); font-size: 13px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Ses Yazı</h1>
+  <p class="sub">Ses kaydını cihazında yazıya döker. Türkçe ve İngilizce cümle cümle otomatik algılanır. Ses hiçbir yere gönderilmez.</p>
+
+  <div class="card">
+    <label class="pick" id="pickBtn">
+      <span aria-hidden="true">🎙️</span> Ses dosyası seç
+      <input id="file" type="file" accept="audio/*,video/*,.m4a,.mp3,.wav,.aac,.ogg,.opus" hidden>
+    </label>
+    <div class="row">
+      <label for="model">Kalite</label>
+      <select id="model">
+        <option value="base">Hızlı (düşük kalite, ~75 MB)</option>
+        <option value="small" selected>Dengeli (~250 MB)</option>
+        <option value="turbo">En iyi (güçlü iPad, ~760 MB)</option>
+      </select>
+    </div>
+    <div class="status" id="status">Hazır</div>
+    <progress id="bar" max="1" value="0" hidden></progress>
+  </div>
+
+  <div class="card" id="resultCard" hidden>
+    <div class="actions" id="actions" hidden>
+      <button id="saveBtn">Kaydet (.txt)</button>
+      <button id="copyBtn">Kopyala</button>
+    </div>
+    <div id="out" style="margin-top:14px"></div>
+  </div>
+
+  <p class="note">İşlem sürerken bu sayfada kal. Başka uygulamaya geçersen iPad işlemi durdurabilir. Model ilk kullanımda bir kere iner, sonra internetsiz de çalışır.</p>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const statusEl = $('status'), bar = $('bar'), out = $('out');
+  let lines = [], fileName = 'metin', wakeLock = null, busy = false;
+
+  try { $('model').value = localStorage.getItem('model') || 'small'; } catch {}
+  $('model').onchange = () => { try { localStorage.setItem('model', $('model').value); } catch {} };
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.storage?.persist?.().catch(() => {});
+
+  const worker = new Worker('worker.js', { type: 'module' });
+
+  function setStatus(text, progress, err = false) {
+    statusEl.textContent = text;
+    statusEl.classList.toggle('err', err);
+    if (progress != null) { bar.hidden = false; bar.value = progress; }
+  }
+
+  function setBusy(b) {
+    busy = b;
+    $('pickBtn').setAttribute('aria-disabled', b);
+    $('model').disabled = b;
+    if (b) navigator.wakeLock?.request('screen').then((l) => (wakeLock = l)).catch(() => {});
+    else { wakeLock?.release().catch(() => {}); wakeLock = null; }
+  }
+  // ekran kilidi sekme gizlenince düşer; geri gelince yeniden al
+  document.addEventListener('visibilitychange', () => {
+    if (busy && document.visibilityState === 'visible')
+      navigator.wakeLock?.request('screen').then((l) => (wakeLock = l)).catch(() => {});
+  });
+
+  worker.onmessage = ({ data }) => {
+    if (data.type === 'status') setStatus(data.text, data.progress);
+    if (data.type === 'line') {
+      lines.push(`[${data.time}] (${data.lang}) ${data.text}`);
+      const p = document.createElement('p');
+      p.innerHTML = `<span class="t"></span><span class="lang ${data.lang}">${data.lang.toUpperCase()}</span>`;
+      p.firstChild.textContent = data.time;
+      p.append(document.createTextNode(data.text));
+      out.append(p);
+    }
+    if (data.type === 'done') {
+      setStatus(`Bitti ✓ ${lines.length} bölüm`, 1);
+      $('actions').hidden = false;
+      setBusy(false);
+    }
+    if (data.type === 'error') { setStatus('Hata: ' + data.text, null, true); setBusy(false); }
+  };
+
+  async function decode(file) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new Ctx({ sampleRate: 16000 });
+    try {
+      const buf = await ctx.decodeAudioData(await file.arrayBuffer());
+      if (buf.numberOfChannels === 1) return buf.getChannelData(0);
+      const a = buf.getChannelData(0), b = buf.getChannelData(1), m = new Float32Array(a.length);
+      for (let i = 0; i < a.length; i++) m[i] = (a[i] + b[i]) / 2;
+      return m;
+    } finally { ctx.close?.(); }
+  }
+
+  $('file').onchange = async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    fileName = file.name.replace(/\.[^.]+$/, '') || 'metin';
+    lines = []; out.textContent = '';
+    $('resultCard').hidden = false; $('actions').hidden = true;
+    setBusy(true);
+    setStatus('Ses açılıyor...', 0);
+    try {
+      const audio = await decode(file);
+      worker.postMessage({ type: 'run', audio, model: $('model').value, langs: ['tr', 'en'] }, [audio.buffer]);
+    } catch (err) {
+      setStatus('Ses dosyası açılamadı: ' + (err?.message || err), null, true);
+      setBusy(false);
+    }
+  };
+
+  $('saveBtn').onclick = async () => {
+    const f = new File([lines.join('\n') + '\n'], fileName + '.txt', { type: 'text/plain' });
+    if (navigator.canShare?.({ files: [f] })) {
+      try { await navigator.share({ files: [f] }); return; } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(f); a.download = f.name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  };
+  $('copyBtn').onclick = async () => {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    $('copyBtn').textContent = 'Kopyalandı ✓';
+    setTimeout(() => ($('copyBtn').textContent = 'Kopyala'), 1500);
+  };
+</script>
+</body>
+</html>
