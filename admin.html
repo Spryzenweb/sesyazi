@@ -7,20 +7,20 @@
 <meta name="description" content="Ses Yazı ile çıkan tüm metinler.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ses Yazı Panel">
-<meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#16171a" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#faf6f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#18151b" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <style>
   :root {
-    --bg: #f6f5f2; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
-    --line: #e4e2dc; --accent: #2f5bd3; --accent-text: #fff; --soft: #eef2fc;
+    --bg: #faf6f3; --card: #ffffff; --text: #241f26; --muted: #7a7079;
+    --line: #ece4df; --accent: #8a5cd0; --accent-text: #fff; --soft: #f3edfb;
     --tr: #c2410c; --en: #1d4ed8; --err: #b42318; --mark: #fde68a;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #16171a; --card: #1f2024; --text: #ececee; --muted: #9a9aa2;
-      --line: #2e3036; --accent: #6e8ff0; --accent-text: #0b0c0e; --soft: #252b3d;
+      --bg: #18151b; --card: #221e26; --text: #f1ecf3; --muted: #a69cab;
+      --line: #342e3a; --accent: #b393ec; --accent-text: #17131b; --soft: #2b2436;
       --tr: #fb923c; --en: #93b4ff; --err: #f97066; --mark: #6b5a1e;
     }
   }
@@ -36,7 +36,7 @@
   h1 { font-size: 28px; margin: 0; letter-spacing: -0.02em; }
   h2 { font-size: 18px; margin: 0; overflow-wrap: anywhere; }
   a { color: var(--accent); font-weight: 600; text-decoration: none; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px; }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
   .stat .label { color: var(--muted); font-size: 13px; }
   .stat .value { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
@@ -68,7 +68,7 @@
     padding: 9px 13px; border-radius: 10px; border: 1px solid var(--line);
     background: var(--card); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
   }
-  .btn.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+  .btn.primary { background: linear-gradient(135deg, #8a5cd0, #d9688f); color: #fff; border-color: transparent; }
   .btn.danger { color: var(--err); }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; padding: 2px; background: var(--bg); }
   .seg button { border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
@@ -78,7 +78,8 @@
   .lang { font-size: 11px; font-weight: 700; margin-right: 6px; }
   .lang.tr { color: var(--tr); } .lang.en { color: var(--en); }
   .empty { color: var(--muted); padding: 24px 4px; text-align: center; }
-  .status { font-size: 14px; color: var(--muted); margin-top: 10px; min-height: 1.4em; }
+  .status { font-size: 14px; color: var(--muted); margin-top: 10px; }
+  .status:empty { display: none; }
   .status.err { color: var(--err); }
   .lock { max-width: 420px; margin: 40px auto; }
   .lock .row { display: flex; gap: 8px; margin-top: 12px; }
@@ -88,7 +89,7 @@
 <body>
 <main>
   <header>
-    <h1>Panel</h1>
+    <h1>Buse'nin notları</h1>
     <a href="./">← Ses Yazı</a>
   </header>
 
@@ -265,7 +266,7 @@
       const li = document.createElement('li'); if (!it.ok) li.className = 'failed';
       const b = document.createElement('button');
       b.setAttribute('aria-current', current?.id === it.id);
-      const n = document.createElement('span'); n.className = 'name'; n.textContent = it.name || it.id;
+      const n = document.createElement('span'); n.className = 'name'; n.textContent = (it.name || it.id).replace(/\.[^.]+$/, '');
       const m = document.createElement('span'); m.className = 'meta';
       m.textContent = it.ok ? `${fmtDur(it.total_s)} · ${fmtDate(it.finished)}` : `Başarısız · ${fmtDate(it.finished)}`;
       b.append(n, m);
@@ -291,7 +292,7 @@
   async function openItem(it) {
     current = it; renderList();
     $('viewerEmpty').hidden = true; $('viewerBody').hidden = false;
-    $('vName').textContent = it.name || it.id;
+    $('vName').textContent = (it.name || it.id).replace(/\.[^.]+$/, '');
     $('vMeta').textContent = it.ok ? `${fmtDur(it.total_s)} ses · ${fmtDate(it.finished)} · işlem ${Math.round(it.minutes || 0)} dk` : 'Bu kayıt işlenemedi.';
     $('text').textContent = 'Yükleniyor...';
     if (it.ok && !texts.has(it.id)) {

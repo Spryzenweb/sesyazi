@@ -4,158 +4,180 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ses Yazı</title>
-<meta name="description" content="Ses kayıtlarını yazıya döker. Türkçe + İngilizce karışık konuşma.">
+<meta name="description" content="Buse'nin ders kayıtlarını yazıya döker. Türkçe + İngilizce karışık konuşma.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ses Yazı">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#16171a" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#faf6f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#18151b" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <style>
   :root {
-    --bg: #f6f5f2; --card: #ffffff; --text: #1d1d1f; --muted: #6b6b70;
-    --line: #e4e2dc; --accent: #2f5bd3; --accent-text: #fff; --soft: #eef2fc;
-    --tr: #c2410c; --en: #1d4ed8; --err: #b42318; --ok: #157f3b;
+    --bg: #faf6f3; --card: #ffffff; --text: #241f26; --muted: #7a7079;
+    --line: #ece4df; --accent: #8a5cd0; --accent-2: #d9688f;
+    --soft: #f3edfb; --soft-2: #fdf0f4;
+    --tr: #c2410c; --en: #2563eb; --err: #b42318; --ok: #15803d;
+    --shadow: 0 1px 2px rgba(36,31,38,.05), 0 6px 24px rgba(36,31,38,.06);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #16171a; --card: #1f2024; --text: #ececee; --muted: #9a9aa2;
-      --line: #2e3036; --accent: #6e8ff0; --accent-text: #0b0c0e; --soft: #252b3d;
+      --bg: #18151b; --card: #221e26; --text: #f1ecf3; --muted: #a69cab;
+      --line: #342e3a; --accent: #b393ec; --accent-2: #f08fb0;
+      --soft: #2b2436; --soft-2: #33232b;
       --tr: #fb923c; --en: #93b4ff; --err: #f97066; --ok: #4ade80;
+      --shadow: none;
     }
   }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; }
   body {
     background: var(--bg); color: var(--text);
-    font: 17px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-    padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    padding: max(20px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom));
   }
-  main { max-width: 760px; margin: 0 auto; }
-  h1 { font-size: 28px; margin: 8px 0 4px; letter-spacing: -0.02em; }
-  h2 { font-size: 17px; margin: 0 0 10px; }
-  .sub { color: var(--muted); margin: 0 0 20px; font-size: 15px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-  .seg { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 3px; margin-bottom: 14px; }
-  .seg button {
-    flex: 1; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 15px; font-weight: 600;
-    padding: 9px 6px; border-radius: 9px; cursor: pointer;
+  main { max-width: 720px; margin: 0 auto; }
+  .top { display: flex; justify-content: flex-end; }
+  .top a { color: var(--accent); font-weight: 600; font-size: 15px; text-decoration: none; padding: 6px 2px; }
+  .hello { font-size: 32px; line-height: 1.15; margin: 14px 0 6px; letter-spacing: -0.02em; font-weight: 750; }
+  .hello .name {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .seg button[aria-pressed="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
-  .pick {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    width: 100%; padding: 18px; border: 0; border-radius: 14px;
-    background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600; font-size: 19px;
-    cursor: pointer;
+  .sub { color: var(--muted); margin: 0 0 22px; font-size: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; margin-bottom: 18px; box-shadow: var(--shadow); }
+  h2 { font-size: 19px; margin: 0 0 12px; letter-spacing: -0.01em; }
+
+  .drop {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    min-height: 168px; padding: 22px; border-radius: 16px; cursor: pointer; text-align: center;
+    background: linear-gradient(135deg, var(--soft), var(--soft-2));
+    border: 1.5px dashed var(--accent);
   }
-  .pick[aria-disabled="true"] { opacity: .5; pointer-events: none; }
-  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
-  .row label { color: var(--muted); font-size: 15px; }
-  select, input[type=password], input[type=text] {
-    font: inherit; font-size: 15px; padding: 10px 12px; border-radius: 10px;
-    border: 1px solid var(--line); background: var(--bg); color: var(--text);
+  .drop .icon {
+    width: 58px; height: 58px; border-radius: 18px; display: grid; place-items: center; margin-bottom: 4px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff;
   }
-  input[type=password] { flex: 1 1 220px; min-width: 0; }
+  .drop .big { font-size: 20px; font-weight: 700; }
+  .drop .small { color: var(--muted); font-size: 14px; }
+  .drop[aria-disabled="true"] { opacity: .55; pointer-events: none; }
+
+  .status { font-size: 15px; margin-top: 14px; }
+  .status:empty { display: none; }
+  .status.err { color: var(--err); }
+  .status.ok { color: var(--ok); font-weight: 600; }
+  progress { width: 100%; height: 8px; margin-top: 10px; accent-color: var(--accent); }
+
+  .setup { background: var(--soft); border-radius: 16px; padding: 18px; }
+  .setup p { margin: 4px 0 14px; color: var(--muted); font-size: 15px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  input[type=password] {
+    flex: 1 1 220px; min-width: 0; font: inherit; padding: 12px 14px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--card); color: var(--text);
+  }
   .btn {
-    padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line);
+    padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line);
     background: var(--card); color: var(--text); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
   }
-  .btn.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; }
-  .setup { background: var(--soft); border-radius: 12px; padding: 14px 16px; font-size: 15px; }
-  .setup ol { margin: 6px 0 12px; padding-left: 20px; }
-  .setup li { margin-bottom: 6px; }
-  .setup a { color: var(--accent); font-weight: 600; }
-  .status { font-size: 15px; margin-top: 14px; min-height: 1.5em; }
-  .status.err { color: var(--err); }
-  progress { width: 100%; height: 8px; margin-top: 10px; accent-color: var(--accent); }
-  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
-  .actions button { flex: 1 1 140px; padding: 12px; }
-  #out p { margin: 0 0 12px; }
-  .t { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; margin-right: 6px; }
-  .lang { font-size: 12px; font-weight: 700; margin-right: 6px; }
-  .lang.tr { color: var(--tr); } .lang.en { color: var(--en); }
-  .note { color: var(--muted); font-size: 13px; }
-  .hist { list-style: none; margin: 0; padding: 0; }
-  .hist li { border-top: 1px solid var(--line); }
-  .hist li:first-child { border-top: 0; }
-  .hist button {
-    width: 100%; text-align: left; background: none; border: 0; color: var(--text); font: inherit;
-    padding: 12px 2px; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
+  .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border-color: transparent; }
+
+  .recs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .rec {
+    width: 100%; display: flex; align-items: center; gap: 12px; text-align: left;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+    color: var(--text); font: inherit; cursor: pointer;
   }
-  .hist .name { font-weight: 600; overflow-wrap: anywhere; }
-  .hist .meta { color: var(--muted); font-size: 13px; white-space: nowrap; }
-  .hist .pending .meta { color: var(--accent); }
-  .hist .failed .meta { color: var(--err); }
+  .rec:disabled { cursor: default; opacity: 1; }
+  .rec .dot { width: 38px; height: 38px; flex: none; border-radius: 12px; display: grid; place-items: center; font-size: 18px; background: var(--soft); }
+  .rec.pending .dot { background: var(--soft-2); }
+  .rec .body { flex: 1; min-width: 0; }
+  .rec .name { font-weight: 600; display: block; overflow-wrap: anywhere; }
+  .rec .meta { color: var(--muted); font-size: 13px; }
+  .rec.pending .meta { color: var(--accent); font-weight: 600; }
+  .rec.failed .meta { color: var(--err); }
+  .rec .chev { color: var(--muted); font-size: 22px; line-height: 1; }
+  .empty { color: var(--muted); text-align: center; padding: 14px 8px; font-size: 15px; }
+  .empty a { color: var(--accent); font-weight: 600; text-decoration: none; }
+
+  .result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  .result-head h2 { margin: 0; overflow-wrap: anywhere; }
+  .result-meta { color: var(--muted); font-size: 13px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; padding: 2px; background: var(--bg); }
+  .seg button { border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 6px; }
+  .actions .btn { flex: 1 1 150px; }
+  #out { margin-top: 14px; font-size: 18px; line-height: 1.65; }
+  #out p { margin: 0 0 14px; }
+  .t { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; margin-right: 6px; }
+  .lang { font-size: 11px; font-weight: 700; margin-right: 6px; letter-spacing: .02em; }
+  .lang.tr { color: var(--tr); } .lang.en { color: var(--en); }
+
+  .note { color: var(--muted); font-size: 13px; text-align: center; margin-top: 8px; }
   .link { background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; padding: 0; }
   [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 <main>
-  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
-    <h1>Ses Yazı</h1>
-    <a href="admin.html" style="color:var(--accent);font-weight:600;text-decoration:none">Panel →</a>
-  </div>
-  <p class="sub">Ses kaydını yazıya döker. Türkçe ve İngilizce cümle cümle otomatik algılanır.</p>
+  <div class="top"><a href="admin.html" id="allLink" hidden>Tüm notlar →</a></div>
+  <h1 class="hello"><span id="greet">Merhaba</span>, <span class="name">Buse</span> <span aria-hidden="true">👋</span></h1>
+  <p class="sub">Ders kaydını seç, yazıya dökeyim. Türkçe ve İngilizce kısımları ayrı ayrı tanırım.</p>
 
   <div class="card">
-    <div class="seg" role="group" aria-label="İşlem yeri">
-      <button id="modeServer" aria-pressed="true">Sunucuda (önerilen)</button>
-      <button id="modeDevice" aria-pressed="false">Bu cihazda</button>
-    </div>
-
-    <!-- sunucu modu: ilk kurulum -->
     <div id="setup" class="setup" hidden>
-      <strong>Şifreni gir</strong>
-      <p style="margin:6px 0 12px">Bir kere girmen yeterli, bu iPad hatırlar.</p>
-      <div class="row" style="margin-top:0">
+      <h2>Şifreni gir</h2>
+      <p>Sadece bir kere, bu iPad hatırlayacak.</p>
+      <div class="row">
         <input id="pwInput" type="password" placeholder="Şifre" autocomplete="current-password">
         <button class="btn primary" id="pwSave">Aç</button>
       </div>
     </div>
 
-    <label class="pick" id="pickBtn">
-      <span aria-hidden="true">🎙️</span> Ses dosyası seç
+    <label class="drop" id="pickBtn" hidden>
+      <span class="icon" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/></svg>
+      </span>
+      <span class="big">Ses kaydı seç</span>
+      <span class="small">m4a, mp3, wav… uzunluk sınırı yok</span>
       <input id="file" type="file" accept="audio/*,video/*,.m4a,.mp3,.wav,.aac,.ogg,.opus" hidden>
     </label>
-
-    <div class="row" id="modelRow" hidden>
-      <label for="model">Kalite</label>
-      <select id="model">
-        <option value="base">Hızlı (düşük kalite, ~75 MB)</option>
-        <option value="small" selected>Dengeli (~250 MB)</option>
-        <option value="turbo">En iyi (~760 MB, iPad'de takılabilir)</option>
-      </select>
-    </div>
-    <div class="status" id="status">Hazır</div>
+    <div class="status" id="status"></div>
     <progress id="bar" max="1" value="0" hidden></progress>
   </div>
 
   <div class="card" id="resultCard" hidden>
-    <h2 id="resultTitle"></h2>
-    <div class="actions" id="actions" hidden>
-      <button class="btn primary" id="notesBtn">📝 Notlar'a aktar</button>
-      <button class="btn" id="saveBtn">Kaydet (.txt)</button>
-      <button class="btn" id="copyBtn">Kopyala</button>
+    <div class="result-head">
+      <div>
+        <h2 id="resultTitle"></h2>
+        <div class="result-meta" id="resultMeta"></div>
+      </div>
+      <div class="seg" role="group" aria-label="Görünüm">
+        <button id="viewPlain" aria-pressed="true">Düz metin</button>
+        <button id="viewTagged" aria-pressed="false">Zamanlı</button>
+      </div>
     </div>
-    <div id="out" style="margin-top:14px"></div>
+    <div class="actions">
+      <button class="btn primary" id="notesBtn">📝 Notlar'a aktar</button>
+      <button class="btn" id="copyBtn">Kopyala</button>
+      <button class="btn" id="saveBtn">Dosya olarak kaydet</button>
+    </div>
+    <div id="out"></div>
   </div>
 
   <div class="card" id="histCard" hidden>
     <h2>Kayıtların</h2>
-    <ul class="hist" id="hist"></ul>
+    <ul class="recs" id="hist"></ul>
   </div>
 
-  <p class="note" id="noteServer">Ses, sadece senin erişebildiğin gizli bir sunucu deposuna gönderilir ve orada büyük modelle işlenir. Yükleme bittikten sonra uygulamayı kapatabilirsin, sonuç burada “Kayıtların” listesine düşer. <button class="link" id="tokenReset">Şifreyi yeniden gir</button></p>
-  <p class="note" id="noteDevice" hidden>İşlem sürerken bu sayfada kal. Başka uygulamaya geçersen iPad işlemi durdurabilir. Model ilk kullanımda bir kere iner, sonra internetsiz de çalışır.</p>
+  <p class="note" id="note" hidden>Kayıtların sadece sana ait gizli bir depoda işlenir. Yükleme bitince uygulamayı kapatabilirsin; metin hazır olunca burada görünür.<br><button class="link" id="tokenReset">Şifreyi yeniden gir</button></p>
 </main>
 
 <script>
   const $ = (id) => document.getElementById(id);
   const statusEl = $('status'), bar = $('bar'), out = $('out');
-  let lines = [], fileName = 'metin', wakeLock = null, busy = false;
+  let lines = [], fileName = 'metin', busy = false, plain = true;
 
   const store = {
     get(k, d = null) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -163,66 +185,73 @@
     del(k) { try { localStorage.removeItem(k); } catch {} },
   };
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-    // service worker ilk kez devreye girince çok çekirdek modu için bir kere yenile
-    if (!self.crossOriginIsolated) navigator.serviceWorker.ready.then(() => {
-      try {
-        if (sessionStorage.getItem('coi-reload')) return;
-        sessionStorage.setItem('coi-reload', '1');
-      } catch { return; }
-      location.reload();
-    });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+  {
+    const h = new Date().getHours();
+    $('greet').textContent = h < 5 ? 'İyi geceler' : h < 12 ? 'Günaydın' : h < 18 ? 'İyi günler' : h < 22 ? 'İyi akşamlar' : 'İyi geceler';
   }
-  navigator.storage?.persist?.().catch(() => {});
 
   // ---------- ortak arayüz ----------
-  let lastChange = Date.now();
-  function setStatus(text, progress, err = false) {
-    if (text !== statusEl.textContent) lastChange = Date.now();
+  function setStatus(text, progress, kind = '') {
     statusEl.textContent = text;
-    statusEl.classList.toggle('err', err);
+    statusEl.className = 'status ' + kind;
     if (progress != null) { bar.hidden = false; bar.value = progress; }
-    else if (!err) bar.hidden = true;
+    else bar.hidden = true;
   }
 
-  function setBusy(b, keepAwake = true) {
+  function setBusy(b) {
     busy = b;
     $('pickBtn').setAttribute('aria-disabled', b);
-    $('model').disabled = b;
-    $('modeServer').disabled = $('modeDevice').disabled = b;
-    if (b && keepAwake) navigator.wakeLock?.request('screen').then((l) => (wakeLock = l)).catch(() => {});
-    else if (!b) { wakeLock?.release().catch(() => {}); wakeLock = null; }
   }
-  // ekran kilidi sekme gizlenince düşer; geri gelince yeniden al
-  document.addEventListener('visibilitychange', () => {
-    if (busy && wakeLock && document.visibilityState === 'visible')
-      navigator.wakeLock?.request('screen').then((l) => (wakeLock = l)).catch(() => {});
-  });
 
-  function showResult(title, textLines) {
+  const tagRe = /^\[(\d\d:\d\d:\d\d)\] \((\w+)\) (.*)$/;
+
+  function showResult(title, meta, textLines) {
     lines = textLines;
     fileName = title.replace(/\.[^.]+$/, '') || 'metin';
-    $('resultTitle').textContent = title;
-    out.textContent = '';
-    for (const l of textLines) addLine(l);
+    $('resultTitle').textContent = fileName;
+    $('resultMeta').textContent = meta;
     $('resultCard').hidden = false;
-    $('actions').hidden = textLines.length === 0;
+    renderText();
   }
 
-  function addLine(line) {
-    const m = line.match(/^\[(\d\d:\d\d:\d\d)\] \((\w+)\) (.*)$/);
-    const p = document.createElement('p');
-    if (m) {
-      const t = document.createElement('span'); t.className = 't'; t.textContent = m[1];
-      const l = document.createElement('span'); l.className = 'lang ' + m[2]; l.textContent = m[2].toUpperCase();
-      p.append(t, l, document.createTextNode(m[3]));
-    } else p.textContent = line;
-    out.append(p);
+  function renderText() {
+    out.textContent = '';
+    for (const line of lines) {
+      const m = line.match(tagRe);
+      const p = document.createElement('p');
+      if (m && !plain) {
+        const t = document.createElement('span'); t.className = 't'; t.textContent = m[1];
+        const l = document.createElement('span'); l.className = 'lang ' + m[2]; l.textContent = m[2].toUpperCase();
+        p.append(t, l);
+      }
+      p.append(m ? m[3] : line);
+      out.append(p);
+    }
   }
+  $('viewPlain').onclick = () => { plain = true; $('viewPlain').setAttribute('aria-pressed', true); $('viewTagged').setAttribute('aria-pressed', false); renderText(); };
+  $('viewTagged').onclick = () => { plain = false; $('viewTagged').setAttribute('aria-pressed', true); $('viewPlain').setAttribute('aria-pressed', false); renderText(); };
 
+  // Notlar için: etiketsiz, paragraf paragraf düz metin; ilk satır notun başlığı olur
+  function notesText() {
+    const body = lines.map((l) => l.replace(tagRe, '$3').trim()).filter(Boolean);
+    return [fileName, '', ...body.flatMap((p) => [p, ''])].join('\n').trim() + '\n';
+  }
+  const shownText = () => plain ? notesText() : lines.join('\n') + '\n';
+  const flash = (btn, t) => { const o = btn.textContent; btn.textContent = t; setTimeout(() => (btn.textContent = o), 2000); };
+
+  $('notesBtn').onclick = async () => {
+    const text = notesText();
+    if (navigator.share) {
+      try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    await navigator.clipboard.writeText(text);
+    flash($('notesBtn'), 'Kopyalandı, Notlar\'a yapıştır ✓');
+  };
+  $('copyBtn').onclick = async () => { await navigator.clipboard.writeText(shownText()); flash($('copyBtn'), 'Kopyalandı ✓'); };
   $('saveBtn').onclick = async () => {
-    const f = new File([lines.join('\n') + '\n'], fileName + '.txt', { type: 'text/plain' });
+    const f = new File([shownText()], fileName + '.txt', { type: 'text/plain' });
     if (navigator.canShare?.({ files: [f] })) {
       try { await navigator.share({ files: [f] }); return; } catch (e) { if (e.name === 'AbortError') return; }
     }
@@ -230,56 +259,14 @@
     a.href = URL.createObjectURL(f); a.download = f.name; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   };
-  // Notlar için: etiketsiz, paragraf paragraf düz metin; ilk satır notun başlığı olur
-  function notesText() {
-    const body = lines.map((l) => l.replace(/^\[\d\d:\d\d:\d\d\] \(\w+\) /, '').trim()).filter(Boolean);
-    return [fileName, '', ...body.flatMap((p) => [p, ''])].join('\n').trim() + '\n';
-  }
-  $('notesBtn').onclick = async () => {
-    const text = notesText();
-    if (navigator.share) {
-      try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; }
-    }
-    await navigator.clipboard.writeText(text);
-    $('notesBtn').textContent = 'Kopyalandı, Notlar\'a yapıştır ✓';
-    setTimeout(() => ($('notesBtn').textContent = '📝 Notlar\'a aktar'), 2500);
-  };
 
-  $('copyBtn').onclick = async () => {
-    await navigator.clipboard.writeText(lines.join('\n'));
-    $('copyBtn').textContent = 'Kopyalandı ✓';
-    setTimeout(() => ($('copyBtn').textContent = 'Kopyala'), 1500);
-  };
-
-  // ---------- mod seçimi ----------
-  let mode = store.get('mode', 'server');
-  function setMode(m) {
-    mode = m; store.set('mode', m);
-    $('modeServer').setAttribute('aria-pressed', m === 'server');
-    $('modeDevice').setAttribute('aria-pressed', m === 'device');
-    $('modelRow').hidden = m !== 'device';
-    $('noteServer').hidden = m !== 'server';
-    $('noteDevice').hidden = m !== 'device';
-    $('histCard').hidden = m !== 'server' || !token();
-    if (m === 'server') serverInit(); else deviceInit();
-  }
-  $('modeServer').onclick = () => setMode('server');
-  $('modeDevice').onclick = () => setMode('device');
-
-  $('file').onchange = (e) => {
-    const file = e.target.files[0];
-    e.target.value = '';
-    if (!file) return;
-    if (mode === 'server') serverRun(file); else deviceRun(file);
-  };
-
-  // ---------- sunucu modu (GitHub Actions) ----------
+  // ---------- GitHub (gizli sesyazi-data deposu) ----------
   const REPO = 'Spryzenweb/sesyazi-data';
   const API = 'https://api.github.com/repos/' + REPO;
   const token = () => store.get('ghToken');
 
   async function gh(path, opts = {}) {
-    const res = await fetch(path.startsWith('http') ? path : API + path, {
+    const res = await fetch(API + path, {
       ...opts, cache: 'no-store',
       headers: {
         Authorization: 'Bearer ' + token(), Accept: 'application/vnd.github+json',
@@ -304,8 +291,8 @@
     const key = await crypto.subtle.deriveKey(
       { name: 'PBKDF2', hash: 'SHA-256', salt: b64d(k.salt), iterations: k.iter },
       base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(k.iv) }, key, b64d(k.data));
-    return new TextDecoder().decode(plain);
+    const plainBytes = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(k.iv) }, key, b64d(k.data));
+    return new TextDecoder().decode(plainBytes);
   }
 
   $('pwSave').onclick = async () => {
@@ -315,35 +302,33 @@
     try {
       store.set('ghToken', await unlock(pw));
     } catch {
-      setStatus('Şifre yanlış, tekrar dene.', null, true);
+      setStatus('Şifre yanlış, tekrar dene.', null, 'err');
       return;
     }
     try {
       await ghJSON('');
       $('pwInput').value = '';
-      setStatus('Hazır ✓ Ses dosyası seçebilirsin.');
-      serverInit();
+      init();
     } catch (e) {
       store.del('ghToken');
-      setStatus('Sunucuya bağlanılamadı: ' + e.message, null, true);
+      setStatus('Sunucuya bağlanılamadı: ' + e.message, null, 'err');
     }
   };
   $('pwInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('pwSave').click(); });
-  $('tokenReset').onclick = () => { store.del('ghToken'); serverInit(); };
+  $('tokenReset').onclick = () => { store.del('ghToken'); init(); };
 
-  function serverInit() {
+  function init() {
     const has = !!token();
     $('setup').hidden = has;
-    $('pickBtn').hidden = !has;
-    $('histCard').hidden = !has;
-    if (!has) { setStatus('Şifreni girince başlayabilirsin.'); return; }
-    if (!busy) setStatus('Hazır. Ses dosyası seç.');
+    for (const id of ['pickBtn', 'histCard', 'note', 'allLink']) $(id).hidden = !has;
+    if (!busy) setStatus('');
+    if (!has) return;
     refreshHistory();
     for (const j of store.get('jobs', [])) poll(j);
   }
 
-  const fmtDur = (s) => s >= 3600 ? `${Math.floor(s / 3600)} sa ${Math.round(s / 60) % 60} dk` : s >= 60 ? `${Math.round(s / 60)} dk` : `${Math.round(s)} sn`;
-  const fmtDate = (sec) => new Date(sec * 1000).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const fmtDur = (s) => s >= 3600 ? `${Math.floor(s / 3600)} sa ${Math.round(s / 60) % 60} dk` : s >= 60 ? `${Math.round(s / 60)} dk` : `${Math.round(s || 0)} sn`;
+  const fmtDate = (sec) => new Date(sec * 1000).toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
   function audioDuration(file) {
     return new Promise((resolve) => {
@@ -380,8 +365,14 @@
     });
   }
 
-  async function serverRun(file) {
-    if (file.size > 95e6) { setStatus('Dosya çok büyük (en fazla ~95 MB).', null, true); return; }
+  $('file').onchange = (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (file) upload(file);
+  };
+
+  async function upload(file) {
+    if (file.size > 95e6) { setStatus('Dosya çok büyük (en fazla ~95 MB).', null, 'err'); return; }
     setBusy(true);
     try {
       const dur = await audioDuration(file);
@@ -390,10 +381,9 @@
 
       setStatus('Dosya hazırlanıyor...', 0);
       const b64 = await fileToBase64(file);
-      const blob = await uploadBlob(b64, (p) =>
-        setStatus(`Yükleniyor: %${Math.round(p * 100)} (${(file.size / 1e6).toFixed(1)} MB)`, p * 0.95));
+      const blob = await uploadBlob(b64, (p) => setStatus(`Yükleniyor… %${Math.round(p * 100)}`, p * 0.95));
 
-      setStatus('Sunucuya iletiliyor...', 0.97);
+      setStatus('Neredeyse bitti...', 0.97);
       const main = await ghJSON('/git/ref/heads/main');
       const base = await ghJSON('/git/commits/' + main.object.sha);
       const tree = await ghJSON('/git/trees', { method: 'POST', body: JSON.stringify({
@@ -404,18 +394,18 @@
 
       const job = { id, name: file.name, dur, started: Math.floor(Date.now() / 1000) };
       store.set('jobs', [job, ...store.get('jobs', [])]);
-      setStatus('Yüklendi ✓ Sunucu işliyor. İstersen uygulamayı kapatabilirsin, sonuç “Kayıtların” listesine düşer.', 1);
+      setStatus('Yüklendi ✓ Şimdi yazıya döküyorum. Uygulamayı kapatabilirsin, hazır olunca aşağıda görünecek.', null, 'ok');
       renderHistory();
       poll(job);
     } catch (e) {
-      setStatus('Hata: ' + e.message, null, true);
+      setStatus('Bir sorun oldu: ' + e.message, null, 'err');
     } finally {
       setBusy(false);
     }
   }
 
   const polling = new Set();
-  const jobState = {}; // id -> metin
+  const jobState = {}; // id -> durum metni
   async function poll(job) {
     if (polling.has(job.id)) return;
     polling.add(job.id);
@@ -432,21 +422,19 @@
         const runs = await ghJSON('/actions/runs?per_page=1&branch=job-' + encodeURIComponent(job.id));
         const run = runs.workflow_runs[0];
         const mins = Math.round((Date.now() / 1000 - job.started) / 60);
-        if (!run) jobState[job.id] = 'Sunucu başlatılıyor...';
-        else if (run.status === 'queued' || run.status === 'waiting' || run.status === 'pending') jobState[job.id] = 'Sırada bekliyor...';
-        else if (run.status === 'completed' && run.conclusion !== 'success') jobState[job.id] = 'Sonuç kaydediliyor...';
+        if (!run) jobState[job.id] = 'Başlıyor…';
+        else if (['queued', 'waiting', 'pending'].includes(run.status)) jobState[job.id] = 'Sırada bekliyor…';
+        else if (run.status === 'completed') jobState[job.id] = 'Kaydediliyor…';
         else {
           let step = '';
           try {
             const jobs = await ghJSON('/actions/runs/' + run.id + '/jobs');
-            const cur = jobs.jobs[0]?.steps?.find((s) => s.status === 'in_progress');
-            step = cur?.name || '';
+            step = jobs.jobs[0]?.steps?.find((s) => s.status === 'in_progress')?.name || '';
           } catch {}
-          jobState[job.id] = (/Dil tespiti/.test(step) ? 'Yazıya dökülüyor' : /Kurulum|önbellek|checkout|python/i.test(step) ? 'Sunucu hazırlanıyor' : 'İşleniyor')
-            + ` · ${mins} dk geçti`;
+          jobState[job.id] = (/Dil tespiti/.test(step) ? 'Yazıya dökülüyor' : 'Hazırlanıyor') + ` · ${mins} dk oldu`;
         }
       } catch (e) {
-        jobState[job.id] = e.status === 401 ? 'Erişim süresi dolmuş, Mac\'ten yenilenmeli' : 'Bağlantı bekleniyor...';
+        jobState[job.id] = e.status === 401 ? 'Erişim süresi dolmuş' : 'Bağlantı bekleniyor…';
       }
       renderHistory();
       await new Promise((r) => setTimeout(r, 15000));
@@ -469,116 +457,44 @@
   function renderHistory() {
     const ul = $('hist'); ul.textContent = '';
     const pending = store.get('jobs', []);
-    const add = (cls, name, meta, onClick) => {
-      const li = document.createElement('li'); li.className = cls;
-      const b = document.createElement('button');
-      const n = document.createElement('span'); n.className = 'name'; n.textContent = name;
+    const add = (cls, icon, name, meta, onClick) => {
+      const li = document.createElement('li');
+      const b = document.createElement('button'); b.className = 'rec ' + cls;
+      const d = document.createElement('span'); d.className = 'dot'; d.textContent = icon;
+      const body = document.createElement('span'); body.className = 'body';
+      const n = document.createElement('span'); n.className = 'name'; n.textContent = name.replace(/\.[^.]+$/, '');
       const m = document.createElement('span'); m.className = 'meta'; m.textContent = meta;
-      b.append(n, m); if (onClick) b.onclick = onClick; else b.disabled = true;
+      body.append(n, m); b.append(d, body);
+      if (onClick) {
+        b.onclick = onClick;
+        const c = document.createElement('span'); c.className = 'chev'; c.textContent = '›'; b.append(c);
+      } else b.disabled = true;
       li.append(b); ul.append(li);
     };
-    for (const j of pending) add('pending', j.name, jobState[j.id] || 'Bekleniyor...');
-    for (const h of historyItems) {
-      const dur = h.total_s ? fmtDur(h.total_s) + ' · ' : '';
-      add(h.ok ? '' : 'failed', h.name || h.id, h.ok ? dur + fmtDate(h.finished) : 'Başarısız · ' + fmtDate(h.finished),
-        h.ok ? () => openResult(h) : null);
+    for (const j of pending) add('pending', '⏳', j.name, jobState[j.id] || 'Bekleniyor…');
+    for (const h of historyItems.slice(0, 10)) {
+      if (h.ok) add('', '📄', h.name || h.id, `${fmtDur(h.total_s)} · ${fmtDate(h.finished)}`, () => openResult(h));
+      else add('failed', '⚠️', h.name || h.id, 'İşlenemedi · ' + fmtDate(h.finished));
     }
     if (!pending.length && !historyItems.length) {
-      const li = document.createElement('li'); li.className = 'note'; li.style.padding = '8px 2px';
-      li.textContent = 'Henüz kayıt yok.'; ul.append(li);
+      const li = document.createElement('li'); li.className = 'empty';
+      li.textContent = 'Henüz kayıt yok. İlk dersini yükle!'; ul.append(li);
+    } else if (historyItems.length > 10) {
+      const li = document.createElement('li'); li.className = 'empty';
+      const a = document.createElement('a'); a.href = 'admin.html'; a.textContent = 'Tüm notları gör →';
+      li.append(a); ul.append(li);
     }
   }
 
   async function openResult(h) {
-    setStatus('Metin açılıyor...');
     try {
       const txt = await ghRaw('/contents/outbox/' + h.id + '.txt');
-      showResult(h.name || h.id, txt.split('\n').filter(Boolean));
-      setStatus(`Bitti ✓ ${h.name || ''}`);
+      showResult(h.name || h.id, `${fmtDur(h.total_s)} · ${fmtDate(h.finished)}`, txt.split('\n').filter(Boolean));
       $('resultCard').scrollIntoView({ behavior: 'smooth' });
-    } catch (e) { setStatus('Metin açılamadı: ' + e.message, null, true); }
+    } catch (e) { setStatus('Metin açılamadı: ' + e.message, null, 'err'); }
   }
 
-  // ---------- cihaz modu (tarayıcıda Whisper) ----------
-  const touch = navigator.maxTouchPoints > 1 || /[?&]cpu=1/.test(location.search);
-  if (touch) $('model').querySelector('option[value="turbo"]').remove();
-  {
-    const saved = store.get('model');
-    $('model').value = saved && !(touch && saved === 'turbo') ? saved : 'small';
-  }
-  $('model').onchange = () => { store.set('model', $('model').value); preload(); };
-
-  let worker = null, loadedModel = null;
-  function getWorker() {
-    if (worker) return worker;
-    worker = new Worker('worker.js', { type: 'module' });
-    worker.onmessage = ({ data }) => {
-      if (data.type === 'status') setStatus(data.text, data.progress);
-      if (data.type === 'loaded') {
-        loadedModel = $('model').value;
-        setStatus('Model hazır ✓ Ses dosyası seçebilirsin.', 1);
-        setBusy(false);
-      }
-      if (data.type === 'line') {
-        const l = `[${data.time}] (${data.lang}) ${data.text}`;
-        lines.push(l); addLine(l);
-      }
-      if (data.type === 'done') {
-        setStatus(`Bitti ✓ ${lines.length} bölüm`, 1);
-        $('actions').hidden = false;
-        setBusy(false);
-      }
-      if (data.type === 'error') { setStatus('Hata: ' + data.text, null, true); setBusy(false); }
-    };
-    return worker;
-  }
-
-  // indirme uzun süre ilerlemezse kullanıcıya ne yapacağını söyle
-  setInterval(() => {
-    if (busy && /indiriliyor/.test(statusEl.textContent) && Date.now() - lastChange > 60000)
-      setStatus(statusEl.textContent.split(' — ')[0] +
-        ' — takıldı gibi. Sayfayı yenile ve tekrar dene; tamamlanan dosyalar tekrar inmez. Ya da “Sunucuda” modunu kullan.', null, true);
-  }, 5000);
-
-  function preload() {
-    setBusy(true);
-    setStatus('Model hazırlanıyor...', 0);
-    getWorker().postMessage({ type: 'load', model: $('model').value, cpu: touch });
-  }
-
-  function deviceInit() {
-    $('setup').hidden = true;
-    $('pickBtn').hidden = false;
-    if (loadedModel !== $('model').value) preload();
-    else setStatus('Model hazır ✓ Ses dosyası seçebilirsin.', 1);
-  }
-
-  async function decode(file) {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new Ctx({ sampleRate: 16000 });
-    try {
-      const buf = await ctx.decodeAudioData(await file.arrayBuffer());
-      if (buf.numberOfChannels === 1) return buf.getChannelData(0);
-      const a = buf.getChannelData(0), b = buf.getChannelData(1), m = new Float32Array(a.length);
-      for (let i = 0; i < a.length; i++) m[i] = (a[i] + b[i]) / 2;
-      return m;
-    } finally { ctx.close?.(); }
-  }
-
-  async function deviceRun(file) {
-    showResult(file.name, []);
-    setBusy(true);
-    setStatus('Ses açılıyor...', 0);
-    try {
-      const audio = await decode(file);
-      getWorker().postMessage({ type: 'run', audio, model: $('model').value, langs: ['tr', 'en'], cpu: touch }, [audio.buffer]);
-    } catch (err) {
-      setStatus('Ses dosyası açılamadı: ' + (err?.message || err), null, true);
-      setBusy(false);
-    }
-  }
-
-  setMode(mode);
+  init();
 </script>
 </body>
 </html>
