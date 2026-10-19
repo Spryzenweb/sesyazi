@@ -181,7 +181,7 @@ async function run({ audio, model: key, langs: allowed }) {
 
 self.onmessage = async ({ data }) => {
   try {
-    if (data.type === 'load') await load(data.model);
+    if (data.type === 'load') { await load(data.model); post('loaded'); }
     if (data.type === 'run') await run(data);
   } catch (e) {
     post('error', { text: String(e?.message ?? e) });

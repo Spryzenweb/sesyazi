@@ -104,8 +104,17 @@
   const statusEl = $('status'), bar = $('bar'), out = $('out');
   let lines = [], fileName = 'metin', wakeLock = null, busy = false;
 
-  try { $('model').value = localStorage.getItem('model') || 'small'; } catch {}
-  $('model').onchange = () => { try { localStorage.setItem('model', $('model').value); } catch {} };
+  // iPad/iPhone'da büyük model Safari'nin bellek sınırına takılıyor, orada gösterme
+  const touch = navigator.maxTouchPoints > 1;
+  if (touch) $('model').querySelector('option[value="turbo"]').remove();
+  try {
+    const saved = localStorage.getItem('model');
+    $('model').value = saved && !(touch && saved === 'turbo') ? saved : 'small';
+  } catch {}
+  $('model').onchange = () => {
+    try { localStorage.setItem('model', $('model').value); } catch {}
+    preload();
+  };
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
   navigator.storage?.persist?.().catch(() => {});
@@ -140,8 +149,19 @@
       navigator.wakeLock?.request('screen').then((l) => (wakeLock = l)).catch(() => {});
   });
 
+  // sayfa açılınca modeli hemen hazırla (ilk seferde iner, sonra cihazdan yüklenir)
+  function preload() {
+    setBusy(true);
+    setStatus('Model hazırlanıyor...', 0);
+    worker.postMessage({ type: 'load', model: $('model').value });
+  }
+
   worker.onmessage = ({ data }) => {
     if (data.type === 'status') setStatus(data.text, data.progress);
+    if (data.type === 'loaded') {
+      setStatus('Model hazır ✓ Ses dosyası seçebilirsin.', 1);
+      setBusy(false);
+    }
     if (data.type === 'line') {
       lines.push(`[${data.time}] (${data.lang}) ${data.text}`);
       const p = document.createElement('p');
@@ -157,6 +177,7 @@
     }
     if (data.type === 'error') { setStatus('Hata: ' + data.text, null, true); setBusy(false); }
   };
+  preload();
 
   async function decode(file) {
     const Ctx = window.AudioContext || window.webkitAudioContext;
