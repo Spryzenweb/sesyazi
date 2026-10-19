@@ -105,16 +105,11 @@
 
     <!-- sunucu modu: ilk kurulum -->
     <div id="setup" class="setup" hidden>
-      <strong>Bir kerelik kurulum</strong>
-      <ol>
-        <li><a id="tokenLink" target="_blank" rel="noopener">Bu bağlantıya dokun</a> ve GitHub'a giriş yap.</li>
-        <li><b>Repository access</b> kısmında <b>Only select repositories</b> seç, listeden <b>sesyazi-data</b>'yı işaretle.</li>
-        <li><b>Permissions</b> kısmında <b>Contents: Read and write</b> ve <b>Actions: Read-only</b> olduğundan emin ol.</li>
-        <li>En alttaki <b>Generate token</b>'a bas, çıkan <code>github_pat_…</code> kodunu kopyala ve buraya yapıştır:</li>
-      </ol>
+      <strong>Şifreni gir</strong>
+      <p style="margin:6px 0 12px">Bir kere girmen yeterli, bu iPad hatırlar.</p>
       <div class="row" style="margin-top:0">
-        <input id="tokenInput" type="password" placeholder="github_pat_..." autocomplete="off" autocapitalize="off" spellcheck="false">
-        <button class="btn primary" id="tokenSave">Kaydet</button>
+        <input id="pwInput" type="password" placeholder="Şifre" autocomplete="current-password">
+        <button class="btn primary" id="pwSave">Aç</button>
       </div>
     </div>
 
@@ -149,7 +144,7 @@
     <ul class="hist" id="hist"></ul>
   </div>
 
-  <p class="note" id="noteServer">Ses, sadece senin erişebildiğin gizli GitHub deposuna gönderilir ve orada büyük modelle işlenir. Yükleme bittikten sonra uygulamayı kapatabilirsin, sonuç burada “Kayıtların” listesine düşer. <button class="link" id="tokenReset">Erişim kodunu değiştir</button></p>
+  <p class="note" id="noteServer">Ses, sadece senin erişebildiğin gizli bir sunucu deposuna gönderilir ve orada büyük modelle işlenir. Yükleme bittikten sonra uygulamayı kapatabilirsin, sonuç burada “Kayıtların” listesine düşer. <button class="link" id="tokenReset">Şifreyi yeniden gir</button></p>
   <p class="note" id="noteDevice" hidden>İşlem sürerken bu sayfada kal. Başka uygulamaya geçersen iPad işlemi durdurabilir. Model ilk kullanımda bir kere iner, sonra internetsiz de çalışır.</p>
 </main>
 
@@ -264,11 +259,6 @@
   const API = 'https://api.github.com/repos/' + REPO;
   const token = () => store.get('ghToken');
 
-  $('tokenLink').href = 'https://github.com/settings/personal-access-tokens/new?' + new URLSearchParams({
-    name: 'Ses Yazı iPad', description: 'Ses Yazı sitesinin sesyazi-data deposuna erişimi',
-    target_name: 'Spryzenweb', expires_in: '366', contents: 'write', actions: 'read',
-  });
-
   async function gh(path, opts = {}) {
     const res = await fetch(path.startsWith('http') ? path : API + path, {
       ...opts, cache: 'no-store',
@@ -287,23 +277,39 @@
   const ghJSON = async (path, opts) => (await gh(path, opts)).json();
   const ghRaw = async (path) => (await gh(path, { headers: { Accept: 'application/vnd.github.raw' } })).text();
 
-  $('tokenSave').onclick = async () => {
-    const t = $('tokenInput').value.trim();
-    if (!t) return;
-    store.set('ghToken', t);
-    setStatus('Erişim kodu kontrol ediliyor...');
+  // GitHub erişim kodu siteye şifreli konuyor (key.json); şifreyle iPad'de çözülüp saklanır
+  const b64d = (x) => Uint8Array.from(atob(x), (c) => c.charCodeAt(0));
+  async function unlock(pw) {
+    const k = await (await fetch('key.json', { cache: 'no-store' })).json();
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', hash: 'SHA-256', salt: b64d(k.salt), iterations: k.iter },
+      base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(k.iv) }, key, b64d(k.data));
+    return new TextDecoder().decode(plain);
+  }
+
+  $('pwSave').onclick = async () => {
+    const pw = $('pwInput').value;
+    if (!pw) return;
+    setStatus('Kontrol ediliyor...');
+    try {
+      store.set('ghToken', await unlock(pw));
+    } catch {
+      setStatus('Şifre yanlış, tekrar dene.', null, true);
+      return;
+    }
     try {
       await ghJSON('');
-      $('tokenInput').value = '';
-      setStatus('Kurulum tamam ✓ Ses dosyası seçebilirsin.');
+      $('pwInput').value = '';
+      setStatus('Hazır ✓ Ses dosyası seçebilirsin.');
       serverInit();
     } catch (e) {
       store.del('ghToken');
-      setStatus(e.status === 401 ? 'Kod geçersiz, tekrar kopyalayıp yapıştır.'
-        : e.status === 404 ? 'Kod sesyazi-data deposunu göremiyor. 2. adımda depoyu seçtiğinden emin ol.'
-        : 'Hata: ' + e.message, null, true);
+      setStatus('Sunucuya bağlanılamadı: ' + e.message, null, true);
     }
   };
+  $('pwInput').onkeydown = (e) => e.key === 'Enter' && $('pwSave').click();
   $('tokenReset').onclick = () => { store.del('ghToken'); serverInit(); };
 
   function serverInit() {
@@ -311,7 +317,7 @@
     $('setup').hidden = has;
     $('pickBtn').hidden = !has;
     $('histCard').hidden = !has;
-    if (!has) { setStatus('Önce bir kerelik kurulumu yap.'); return; }
+    if (!has) { setStatus('Şifreni girince başlayabilirsin.'); return; }
     if (!busy) setStatus('Hazır. Ses dosyası seç.');
     refreshHistory();
     for (const j of store.get('jobs', [])) poll(j);
@@ -421,7 +427,7 @@
             + ` · ${mins} dk geçti`;
         }
       } catch (e) {
-        jobState[job.id] = e.status === 401 ? 'Erişim kodu geçersiz' : 'Bağlantı bekleniyor...';
+        jobState[job.id] = e.status === 401 ? 'Erişim süresi dolmuş, Mac\'ten yenilenmeli' : 'Bağlantı bekleniyor...';
       }
       renderHistory();
       await new Promise((r) => setTimeout(r, 15000));

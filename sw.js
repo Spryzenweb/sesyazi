@@ -1,6 +1,6 @@
 // Sayfayı ve kütüphaneyi önbelleğe alır ki internetsiz de açılsın.
 // Modelleri transformers.js kendi önbelleğinde tutar, burada ellemiyoruz.
-const CACHE = 'sesyazi-v6';
+const CACHE = 'sesyazi-v7';
 const CORE = ['./', 'index.html', 'worker.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
