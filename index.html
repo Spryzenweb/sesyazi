@@ -133,6 +133,7 @@
   <div class="card" id="resultCard" hidden>
     <h2 id="resultTitle"></h2>
     <div class="actions" id="actions" hidden>
+      <button class="btn primary" id="notesBtn">📝 Notlar'a aktar</button>
       <button class="btn" id="saveBtn">Kaydet (.txt)</button>
       <button class="btn" id="copyBtn">Kopyala</button>
     </div>
@@ -226,6 +227,21 @@
     a.href = URL.createObjectURL(f); a.download = f.name; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   };
+  // Notlar için: etiketsiz, paragraf paragraf düz metin; ilk satır notun başlığı olur
+  function notesText() {
+    const body = lines.map((l) => l.replace(/^\[\d\d:\d\d:\d\d\] \(\w+\) /, '').trim()).filter(Boolean);
+    return [fileName, '', ...body.flatMap((p) => [p, ''])].join('\n').trim() + '\n';
+  }
+  $('notesBtn').onclick = async () => {
+    const text = notesText();
+    if (navigator.share) {
+      try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    await navigator.clipboard.writeText(text);
+    $('notesBtn').textContent = 'Kopyalandı, Notlar\'a yapıştır ✓';
+    setTimeout(() => ($('notesBtn').textContent = '📝 Notlar\'a aktar'), 2500);
+  };
+
   $('copyBtn').onclick = async () => {
     await navigator.clipboard.writeText(lines.join('\n'));
     $('copyBtn').textContent = 'Kopyalandı ✓';
